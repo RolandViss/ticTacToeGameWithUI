@@ -6,713 +6,667 @@
     <title>TIC TAC TOE // ARCADE</title>
     <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600&display=swap" rel="stylesheet"/>
     <style>
+        /* Keep all your existing CSS */
         :root {
-          --neon-x: #ff2d6b;
-          --neon-o: #00e5ff;
-          --neon-green: #39ff14;
-          --bg: #050a0f;
-          --surface: #0a1520;
-          --surface2: #0f1f30;
-          --border: #1a3a55;
-          --text: #c8dde8;
-          --dim: #3a5a6a;
-          --yellow: #ffd600;
+            --neon-x: #ff2d6b;
+            --neon-o: #00e5ff;
+            --neon-green: #39ff14;
+            --bg: #050a0f;
+            --surface: #0a1520;
+            --surface2: #0f1f30;
+            --border: #1a3a55;
+            --text: #c8dde8;
+            --dim: #3a5a6a;
+            --yellow: #ffd600;
         }
+
         * { margin:0; padding:0; box-sizing:border-box; }
 
         body {
-          background: var(--bg);
-          color: var(--text);
-          font-family: 'Exo 2', sans-serif;
-          min-height: 100vh;
-          overflow-x: hidden;
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Exo 2', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* ── SCANLINE OVERLAY ── */
         body::before {
-          content:'';
-          position:fixed;
-          inset:0;
-          background: repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(0,229,255,0.015) 2px,
-            rgba(0,229,255,0.015) 4px
-          );
-          pointer-events:none;
-          z-index:9999;
+            content:'';
+            position:fixed;
+            inset:0;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0,229,255,0.015) 2px,
+                rgba(0,229,255,0.015) 4px
+            );
+            pointer-events:none;
+            z-index:9999;
         }
 
-        /* ── HEADER ── */
+        /* Header */
         header {
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          padding:14px 28px;
-          border-bottom:1px solid var(--border);
-          background: linear-gradient(90deg, #050a0f 0%, #0a1a28 50%, #050a0f 100%);
-          position:relative;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:14px 28px;
+            border-bottom:1px solid var(--border);
+            background: linear-gradient(90deg, #050a0f 0%, #0a1a28 50%, #050a0f 100%);
         }
-        header::after {
-          content:'';
-          position:absolute;
-          bottom:0; left:0; right:0;
-          height:1px;
-          background: linear-gradient(90deg, transparent, var(--neon-o), transparent);
-          opacity:.6;
-        }
+
         .logo {
-          font-family:'Orbitron', sans-serif;
-          font-size:1.1rem;
-          font-weight:900;
-          letter-spacing:.15em;
-          color:var(--neon-o);
-          text-shadow: 0 0 16px var(--neon-o);
+            font-family:'Orbitron', sans-serif;
+            font-size:1.1rem;
+            font-weight:900;
+            letter-spacing:.15em;
+            color:var(--neon-o);
+            text-shadow: 0 0 16px var(--neon-o);
         }
-        .logo span { color:var(--neon-x); text-shadow:0 0 16px var(--neon-x); }
+
+        .logo span {
+            color:var(--neon-x);
+            text-shadow:0 0 16px var(--neon-x);
+        }
+
         .status-bar {
-          display:flex;
-          align-items:center;
-          gap:20px;
-          font-family:'Share Tech Mono', monospace;
-          font-size:.72rem;
-          color:var(--dim);
+            display:flex;
+            align-items:center;
+            gap:20px;
+            font-family:'Share Tech Mono', monospace;
+            font-size:.72rem;
+            color:var(--dim);
         }
+
         .status-dot {
-          width:7px; height:7px; border-radius:50%;
-          background:var(--neon-green);
-          box-shadow:0 0 8px var(--neon-green);
-          animation: pulse 1.8s ease-in-out infinite;
+            width:8px;
+            height:8px;
+            border-radius:50%;
+            background:#ff4444;
+            animation: pulse 1s infinite;
         }
-        .status-dot.offline { background:#ff4444; box-shadow:0 0 8px #ff4444; animation:none; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-        /* ── LAYOUT ── */
+        .status-dot.online {
+            background:var(--neon-green);
+            animation: glow 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity:1; }
+            50% { opacity:.3; }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow:0 0 8px var(--neon-green); }
+            50% { box-shadow:0 0 16px var(--neon-green); }
+        }
+
+        /* App Container */
         .app {
-          display:grid;
-          grid-template-columns: 1fr 380px;
-          grid-template-rows: 1fr;
-          height: calc(100vh - 57px);
-          gap:0;
+            display:flex;
+            height: calc(100vh - 50px);
         }
 
-        /* ── LEFT PANEL ── */
         .left-panel {
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          padding:32px 40px;
-          gap:28px;
-          position:relative;
-          overflow:hidden;
-        }
-        .left-panel::before {
-          content:'';
-          position:absolute;
-          width:500px; height:500px;
-          border-radius:50%;
-          background: radial-gradient(circle, rgba(0,229,255,.04) 0%, transparent 70%);
-          top:50%; left:50%;
-          transform:translate(-50%,-50%);
-          pointer-events:none;
+            flex:1;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            padding:40px;
+            overflow-y:auto;
         }
 
-        /* ── MENU SCREEN ── */
+        /* Menu Screen */
         #menu-screen {
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          gap:28px;
-          animation: fadeIn .5s ease;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            gap:30px;
         }
-        .menu-title {
-          font-family:'Orbitron', sans-serif;
-          font-size:2.4rem;
-          font-weight:900;
-          text-align:center;
-          letter-spacing:.1em;
-          color:#fff;
-          text-shadow:0 0 30px rgba(0,229,255,.5);
-          line-height:1.2;
-        }
-        .menu-title span { color:var(--neon-x); text-shadow:0 0 30px var(--neon-x); }
-        .menu-sub {
-          font-family:'Share Tech Mono', monospace;
-          font-size:.75rem;
-          color:var(--dim);
-          letter-spacing:.2em;
-          text-transform:uppercase;
-        }
-        .mode-grid {
-          display:flex;
-          flex-direction:column;
-          gap:14px;
-          width:100%;
-          max-width:380px;
-        }
-        .mode-btn {
-          display:flex;
-          align-items:center;
-          gap:16px;
-          padding:18px 24px;
-          background: var(--surface);
-          border:1px solid var(--border);
-          border-radius:6px;
-          cursor:pointer;
-          transition: all .2s ease;
-          text-align:left;
-          position:relative;
-          overflow:hidden;
-        }
-        .mode-btn::before {
-          content:'';
-          position:absolute;
-          inset:0;
-          background: linear-gradient(90deg, transparent, rgba(0,229,255,.04), transparent);
-          transform: translateX(-100%);
-          transition: transform .4s ease;
-        }
-        .mode-btn:hover::before { transform: translateX(100%); }
-        .mode-btn:hover {
-          border-color:var(--neon-o);
-          box-shadow:0 0 20px rgba(0,229,255,.15), inset 0 0 20px rgba(0,229,255,.03);
-          transform:translateY(-2px);
-        }
-        .mode-btn:hover .mode-icon { text-shadow:0 0 20px currentColor; }
-        .mode-icon {
-          font-size:1.8rem;
-          width:44px;
-          text-align:center;
-          flex-shrink:0;
-        }
-        .mode-info { flex:1; }
-        .mode-label {
-          font-family:'Orbitron', sans-serif;
-          font-size:.8rem;
-          font-weight:700;
-          color:#fff;
-          letter-spacing:.08em;
-          margin-bottom:3px;
-        }
-        .mode-desc {
-          font-family:'Share Tech Mono', monospace;
-          font-size:.65rem;
-          color:var(--dim);
-          letter-spacing:.05em;
-        }
-        .mode-arrow {
-          font-size:1rem;
-          color:var(--dim);
-          transition: color .2s, transform .2s;
-        }
-        .mode-btn:hover .mode-arrow { color:var(--neon-o); transform:translateX(4px); }
 
-        /* ── GAME SCREEN ── */
-        #game-screen {
-          display:none;
-          flex-direction:column;
-          align-items:center;
-          gap:20px;
-          animation: fadeIn .4s ease;
+        .menu-title {
+            font-family:'Orbitron', sans-serif;
+            font-size:3rem;
+            font-weight:900;
+            letter-spacing:.2em;
+            text-align:center;
+            background: linear-gradient(135deg, var(--neon-o), var(--neon-x), var(--neon-green));
+            -webkit-background-clip:text;
+            -webkit-text-fill-color:transparent;
+            background-clip:text;
+            text-shadow: 0 0 30px rgba(0,229,255,.3);
         }
-        #game-screen.visible { display:flex; }
+
+        .menu-subtitle {
+            font-family:'Share Tech Mono', monospace;
+            font-size:.8rem;
+            letter-spacing:.15em;
+            color:var(--dim);
+        }
+
+        .mode-selection {
+            display:flex;
+            flex-direction:column;
+            gap:15px;
+            width:100%;
+            max-width:400px;
+        }
+
+        .mode-btn {
+            padding:20px;
+            border:2px solid var(--border);
+            background:var(--surface);
+            border-radius:8px;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            gap:15px;
+            transition:all .3s;
+            color:var(--text);
+        }
+
+        .mode-btn:hover {
+            border-color:var(--neon-o);
+            box-shadow: 0 0 20px rgba(0,229,255,.2);
+            transform:translateX(8px);
+        }
+
+        .mode-icon {
+            font-size:2rem;
+        }
+
+        .mode-info {
+            flex:1;
+            text-align:left;
+        }
+
+        .mode-label {
+            font-family:'Orbitron', sans-serif;
+            font-weight:700;
+            font-size:.9rem;
+            letter-spacing:.1em;
+        }
+
+        .mode-desc {
+            font-family:'Share Tech Mono', monospace;
+            font-size:.7rem;
+            color:var(--dim);
+            margin-top:4px;
+        }
+
+        .mode-arrow {
+            font-size:1.2rem;
+            color:var(--neon-o);
+        }
+
+        /* Game Screen */
+        #game-screen {
+            display:none;
+            flex-direction:column;
+            width:100%;
+            height:100%;
+        }
 
         .game-header {
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          width:100%;
-          max-width:420px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:15px 30px;
+            border-bottom:1px solid var(--border);
         }
+
         .back-btn {
-          display:flex;
-          align-items:center;
-          gap:8px;
-          padding:7px 14px;
-          background:transparent;
-          border:1px solid var(--border);
-          border-radius:4px;
-          color:var(--dim);
-          font-family:'Share Tech Mono', monospace;
-          font-size:.7rem;
-          cursor:pointer;
-          letter-spacing:.1em;
-          transition:all .2s;
+            padding:8px 16px;
+            border:1px solid var(--border);
+            background:transparent;
+            color:var(--text);
+            cursor:pointer;
+            font-family:'Share Tech Mono', monospace;
+            font-size:.7rem;
+            border-radius:4px;
+            transition:all .2s;
         }
-        .back-btn:hover { border-color:var(--neon-o); color:var(--neon-o); }
+
+        .back-btn:hover {
+            border-color:var(--neon-x);
+            color:var(--neon-x);
+        }
+
         .mode-badge {
-          font-family:'Share Tech Mono', monospace;
-          font-size:.65rem;
-          color:var(--neon-o);
-          letter-spacing:.12em;
-          text-transform:uppercase;
-          background: rgba(0,229,255,.07);
-          border:1px solid rgba(0,229,255,.2);
-          border-radius:20px;
-          padding:4px 12px;
+            font-family:'Orbitron', sans-serif;
+            font-weight:700;
+            font-size:.8rem;
+            padding:6px 12px;
+            border:1px solid var(--neon-o);
+            border-radius:4px;
+            color:var(--neon-o);
+            letter-spacing:.08em;
         }
 
-        /* Turn indicator */
-        .turn-display {
-          display:flex;
-          align-items:center;
-          gap:12px;
-          font-family:'Share Tech Mono', monospace;
-          font-size:.8rem;
-          letter-spacing:.1em;
-          padding:10px 22px;
-          border:1px solid var(--border);
-          border-radius:4px;
-          background:var(--surface);
-          min-width:240px;
-          justify-content:center;
-        }
-        .turn-marker {
-          font-family:'Orbitron', sans-serif;
-          font-size:1rem;
-          font-weight:900;
-        }
-        .turn-marker.x { color:var(--neon-x); text-shadow:0 0 12px var(--neon-x); }
-        .turn-marker.o { color:var(--neon-o); text-shadow:0 0 12px var(--neon-o); }
-
-        /* Scores */
+        /* Scoreboard */
         .scoreboard {
-          display:flex;
-          gap:12px;
-          align-items:center;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:20px;
+            padding:20px;
+            font-family:'Orbitron', sans-serif;
         }
+
         .score-card {
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          padding:10px 22px;
-          background:var(--surface);
-          border:1px solid var(--border);
-          border-radius:6px;
-          min-width:80px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            gap:8px;
+            padding:15px 25px;
+            border:2px solid var(--border);
+            border-radius:6px;
+            background:var(--surface);
         }
-        .score-card.x-card { border-color:rgba(255,45,107,.3); }
-        .score-card.o-card { border-color:rgba(0,229,255,.3); }
+
+        .score-card.x-card { border-color:var(--neon-x); }
+        .score-card.o-card { border-color:var(--neon-o); }
+
         .score-label {
-          font-family:'Share Tech Mono', monospace;
-          font-size:.6rem;
-          color:var(--dim);
-          letter-spacing:.12em;
-          margin-bottom:4px;
+            font-size:.7rem;
+            letter-spacing:.1em;
+            color:var(--dim);
         }
+
         .score-val {
-          font-family:'Orbitron', sans-serif;
-          font-size:1.5rem;
-          font-weight:900;
+            font-size:2rem;
+            font-weight:900;
         }
+
         .score-val.x { color:var(--neon-x); text-shadow:0 0 10px var(--neon-x); }
         .score-val.o { color:var(--neon-o); text-shadow:0 0 10px var(--neon-o); }
+
         .score-divider {
-          font-family:'Orbitron', sans-serif;
-          font-size:.7rem;
-          color:var(--dim);
+            font-size:.8rem;
+            color:var(--dim);
+            font-family:'Share Tech Mono', monospace;
         }
 
-        /* ── BOARD ── */
+        /* Turn Display */
+        .turn-display {
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            gap:12px;
+            padding:15px;
+            font-family:'Share Tech Mono', monospace;
+        }
+
+        .turn-marker {
+            font-size:1.5rem;
+            font-weight:900;
+            padding:4px 12px;
+            border:2px solid;
+            border-radius:4px;
+            min-width:40px;
+            text-align:center;
+        }
+
+        .turn-marker.x {
+            color:var(--neon-x);
+            border-color:var(--neon-x);
+            text-shadow:0 0 10px var(--neon-x);
+        }
+
+        .turn-marker.o {
+            color:var(--neon-o);
+            border-color:var(--neon-o);
+            text-shadow:0 0 10px var(--neon-o);
+        }
+
+        /* Board */
         .board-wrap {
-          position:relative;
+            flex:1;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            position:relative;
+            padding:30px;
         }
+
         #board {
-          display:grid;
-          grid-template-columns:repeat(3,1fr);
-          gap:8px;
-          background: transparent;
-          border-radius:8px;
-          position:relative;
-          z-index:1;
+            display:grid;
+            grid-template-columns:repeat(3, 1fr);
+            gap:12px;
+            width:300px;
+            height:300px;
         }
+
         .cell {
-          width:105px; height:105px;
-          background:var(--surface);
-          border:1px solid var(--border);
-          border-radius:6px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          cursor:pointer;
-          font-family:'Orbitron', sans-serif;
-          font-size:2.4rem;
-          font-weight:900;
-          transition: all .15s ease;
-          position:relative;
-          overflow:hidden;
-          user-select:none;
-        }
-        .cell::before {
-          content:'';
-          position:absolute;
-          inset:0;
-          opacity:0;
-          transition:opacity .2s;
-        }
-        .cell:hover:not(.taken) {
-          border-color:rgba(0,229,255,.4);
-          background: rgba(0,229,255,.04);
-        }
-        .cell.taken { cursor:default; }
-        .cell.x-cell {
-          color:var(--neon-x);
-          text-shadow:0 0 20px var(--neon-x), 0 0 40px rgba(255,45,107,.4);
-          border-color:rgba(255,45,107,.4);
-          background:rgba(255,45,107,.05);
-          animation:placeCell .25s ease;
-        }
-        .cell.o-cell {
-          color:var(--neon-o);
-          text-shadow:0 0 20px var(--neon-o), 0 0 40px rgba(0,229,255,.4);
-          border-color:rgba(0,229,255,.4);
-          background:rgba(0,229,255,.05);
-          animation:placeCell .25s ease;
-        }
-        .cell.win-cell {
-          animation:winPulse 1s ease infinite !important;
-        }
-        .cell.win-cell.x-cell { box-shadow:0 0 24px rgba(255,45,107,.6); }
-        .cell.win-cell.o-cell { box-shadow:0 0 24px rgba(0,229,255,.6); }
-        @keyframes placeCell {
-          0%{transform:scale(.6);opacity:0}
-          70%{transform:scale(1.08)}
-          100%{transform:scale(1);opacity:1}
-        }
-        @keyframes winPulse {
-          0%,100%{filter:brightness(1)}
-          50%{filter:brightness(1.5)}
+            background:var(--surface2);
+            border:2px solid var(--border);
+            border-radius:8px;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:3rem;
+            font-weight:900;
+            font-family:'Orbitron', sans-serif;
+            transition:all .2s;
+            user-select:none;
         }
 
-        /* Result overlay */
+        .cell:hover {
+            border-color:var(--neon-green);
+            box-shadow: 0 0 15px rgba(57,255,20,.3);
+            transform:scale(1.05);
+        }
+
+        .cell.x { color:var(--neon-x); text-shadow:0 0 10px var(--neon-x); }
+        .cell.o { color:var(--neon-o); text-shadow:0 0 10px var(--neon-o); }
+        .cell.disabled { cursor:not-allowed; opacity:.5; }
+
+        /* Result Overlay */
         .result-overlay {
-          display:none;
-          position:absolute;
-          inset:0;
-          border-radius:8px;
-          background:rgba(5,10,15,.88);
-          backdrop-filter:blur(4px);
-          align-items:center;
-          justify-content:center;
-          flex-direction:column;
-          gap:12px;
-          z-index:10;
-          animation:fadeIn .35s ease;
+            display:none;
+            position:absolute;
+            inset:0;
+            background:rgba(5,10,15,.95);
+            backdrop-filter:blur(4px);
+            border-radius:8px;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:20px;
+            z-index:100;
         }
+
         .result-overlay.show { display:flex; }
-        .result-emoji { font-size:2.5rem; }
+
+        .result-emoji {
+            font-size:4rem;
+            animation:bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform:translateY(0); }
+            50% { transform:translateY(-20px); }
+        }
+
         .result-text {
-          font-family:'Orbitron', sans-serif;
-          font-size:1.2rem;
-          font-weight:900;
-          letter-spacing:.1em;
-          text-align:center;
+            font-family:'Orbitron', sans-serif;
+            font-size:2rem;
+            font-weight:900;
+            letter-spacing:.1em;
+            text-align:center;
         }
+
         .result-sub {
-          font-family:'Share Tech Mono', monospace;
-          font-size:.7rem;
-          color:var(--dim);
-          letter-spacing:.15em;
+            font-family:'Share Tech Mono', monospace;
+            font-size:.75rem;
+            color:var(--dim);
+            letter-spacing:.1em;
         }
+
         .play-again-btn {
-          margin-top:8px;
-          padding:10px 26px;
-          background:transparent;
-          border:1px solid var(--neon-o);
-          border-radius:4px;
-          color:var(--neon-o);
-          font-family:'Orbitron', sans-serif;
-          font-size:.7rem;
-          font-weight:700;
-          letter-spacing:.12em;
-          cursor:pointer;
-          transition:all .2s;
+            margin-top:20px;
+            padding:12px 24px;
+            background:linear-gradient(135deg, var(--neon-o), var(--neon-x));
+            border:none;
+            border-radius:6px;
+            color:#000;
+            font-family:'Orbitron', sans-serif;
+            font-weight:700;
+            font-size:.85rem;
+            letter-spacing:.1em;
+            cursor:pointer;
+            transition:all .3s;
         }
+
         .play-again-btn:hover {
-          background:rgba(0,229,255,.08);
-          box-shadow:0 0 20px rgba(0,229,255,.2);
+            transform:scale(1.05);
+            box-shadow: 0 0 20px rgba(255,45,107,.5);
         }
 
-        /* Computing spinner */
+        /* Computing Bar */
         .computing-bar {
-          display:none;
-          align-items:center;
-          gap:10px;
-          font-family:'Share Tech Mono', monospace;
-          font-size:.7rem;
-          color:var(--neon-green);
-          letter-spacing:.12em;
+            display:none;
+            position:absolute;
+            bottom:30px;
+            left:50%;
+            transform:translateX(-50%);
+            padding:12px 20px;
+            background:var(--surface);
+            border:1px solid var(--neon-green);
+            border-radius:6px;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            font-family:'Share Tech Mono', monospace;
+            font-size:.75rem;
+            color:var(--neon-green);
         }
-        .computing-bar.show { display:flex; }
-        .spinner {
-          width:14px; height:14px;
-          border:2px solid rgba(57,255,20,.2);
-          border-top-color:var(--neon-green);
-          border-radius:50%;
-          animation:spin .7s linear infinite;
-        }
-        @keyframes spin { to{transform:rotate(360deg)} }
 
-        /* ── RIGHT PANEL: API LOG ── */
+        .computing-bar.show { display:flex; }
+
+        .spinner {
+            width:12px;
+            height:12px;
+            border:2px solid var(--neon-green);
+            border-top-color:transparent;
+            border-radius:50%;
+            animation:spin .8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform:rotate(360deg); }
+        }
+
+        /* Right Panel - API Log */
         .right-panel {
-          display:flex;
-          flex-direction:column;
-          border-left:1px solid var(--border);
-          background:var(--surface);
-          overflow:hidden;
-          position:relative;
+            width:350px;
+            border-left:1px solid var(--border);
+            display:flex;
+            flex-direction:column;
+            background:var(--surface);
         }
-        .right-panel::before {
-          content:'';
-          position:absolute;
-          top:0; left:0; right:0;
-          height:1px;
-          background:linear-gradient(90deg, transparent, var(--neon-o), transparent);
-          opacity:.3;
-        }
+
         .log-header {
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          padding:14px 18px;
-          border-bottom:1px solid var(--border);
-          background:var(--surface2);
-          flex-shrink:0;
+            padding:15px;
+            border-bottom:1px solid var(--border);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
         }
+
         .log-title {
-          display:flex;
-          align-items:center;
-          gap:10px;
-          font-family:'Orbitron', sans-serif;
-          font-size:.72rem;
-          font-weight:700;
-          color:var(--neon-o);
-          letter-spacing:.1em;
+            font-family:'Orbitron', sans-serif;
+            font-size:.85rem;
+            font-weight:700;
+            letter-spacing:.08em;
+            display:flex;
+            align-items:center;
+            gap:8px;
         }
-        .log-title-icon { font-size:.9rem; }
+
         .log-controls {
-          display:flex;
-          align-items:center;
-          gap:8px;
+            display:flex;
+            align-items:center;
+            gap:8px;
         }
+
         .log-count {
-          font-family:'Share Tech Mono', monospace;
-          font-size:.65rem;
-          color:var(--dim);
-          letter-spacing:.08em;
+            font-family:'Share Tech Mono', monospace;
+            font-size:.65rem;
+            color:var(--dim);
+            letter-spacing:.08em;
         }
+
         .clear-btn {
-          padding:4px 10px;
-          background:transparent;
-          border:1px solid var(--border);
-          border-radius:3px;
-          color:var(--dim);
-          font-family:'Share Tech Mono', monospace;
-          font-size:.6rem;
-          cursor:pointer;
-          letter-spacing:.08em;
-          transition:all .15s;
+            padding:4px 10px;
+            background:transparent;
+            border:1px solid var(--border);
+            border-radius:3px;
+            color:var(--dim);
+            font-family:'Share Tech Mono', monospace;
+            font-size:.6rem;
+            cursor:pointer;
+            letter-spacing:.08em;
+            transition:all .15s;
         }
-        .clear-btn:hover { border-color:#ff4444; color:#ff4444; }
+
+        .clear-btn:hover {
+            border-color:#ff4444;
+            color:#ff4444;
+        }
 
         .log-list {
-          flex:1;
-          overflow-y:auto;
-          padding:10px;
-          display:flex;
-          flex-direction:column;
-          gap:8px;
+            flex:1;
+            overflow-y:auto;
+            padding:10px;
+            display:flex;
+            flex-direction:column;
+            gap:8px;
         }
+
         .log-list::-webkit-scrollbar { width:4px; }
         .log-list::-webkit-scrollbar-track { background:transparent; }
-        .log-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+        .log-list::-webkit-scrollbar-thumb {
+            background:var(--border);
+            border-radius:2px;
+        }
 
         .log-empty {
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          height:100%;
-          gap:10px;
-          color:var(--dim);
-          font-family:'Share Tech Mono', monospace;
-          font-size:.7rem;
-          letter-spacing:.1em;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            height:100%;
+            gap:10px;
+            color:var(--dim);
+            font-family:'Share Tech Mono', monospace;
+            font-size:.7rem;
+            letter-spacing:.1em;
         }
-        .log-empty-icon { font-size:2rem; opacity:.3; }
+
+        .log-empty-icon {
+            font-size:2rem;
+            opacity:.3;
+        }
 
         /* Log Entry */
         .log-entry {
-          border-radius:5px;
-          border:1px solid var(--border);
-          background:var(--bg);
-          overflow:hidden;
-          animation: slideInLog .3s ease;
-          cursor:pointer;
-          transition:border-color .15s;
+            border-radius:5px;
+            border:1px solid var(--border);
+            background:var(--bg);
+            overflow:hidden;
+            animation: slideInLog .3s ease;
+            cursor:pointer;
+            transition:border-color .15s;
         }
-        .log-entry:hover { border-color:rgba(0,229,255,.3); }
+
+        .log-entry:hover {
+            border-color:rgba(0,229,255,.3);
+        }
+
         @keyframes slideInLog {
-          from{opacity:0;transform:translateY(-8px)}
-          to{opacity:1;transform:translateY(0)}
+            from{opacity:0;transform:translateY(-8px)}
+            to{opacity:1;transform:translateY(0)}
         }
+
         .log-entry-head {
-          display:flex;
-          align-items:center;
-          gap:8px;
-          padding:8px 12px;
-          font-family:'Share Tech Mono', monospace;
-          font-size:.65rem;
-          letter-spacing:.06em;
-          position:relative;
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 12px;
+            font-family:'Share Tech Mono', monospace;
+            font-size:.65rem;
+            letter-spacing:.06em;
+            position:relative;
         }
+
         .log-method {
-          font-weight:700;
-          font-size:.6rem;
-          padding:2px 6px;
-          border-radius:2px;
-          letter-spacing:.08em;
+            font-weight:700;
+            font-size:.6rem;
+            padding:2px 6px;
+            border-radius:2px;
+            letter-spacing:.08em;
         }
-        .log-method.POST { background:rgba(57,255,20,.15); color:var(--neon-green); }
-        .log-method.GET { background:rgba(0,229,255,.15); color:var(--neon-o); }
-        .log-method.DELETE { background:rgba(255,45,107,.15); color:var(--neon-x); }
+
+        .log-method.POST {
+            background:rgba(57,255,20,.15);
+            color:var(--neon-green);
+        }
+
+        .log-method.GET {
+            background:rgba(0,229,255,.15);
+            color:var(--neon-o);
+        }
+
         .log-endpoint {
-          flex:1;
-          color:var(--text);
-          font-size:.63rem;
-          white-space:nowrap;
-          overflow:hidden;
-          text-overflow:ellipsis;
+            flex:1;
+            color:var(--text);
+            font-size:.63rem;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
         }
+
         .log-status {
-          font-size:.6rem;
-          padding:2px 7px;
-          border-radius:2px;
-          font-weight:700;
-        }
-        .log-status.ok { background:rgba(57,255,20,.12); color:var(--neon-green); }
-        .log-status.err { background:rgba(255,45,107,.12); color:var(--neon-x); }
-        .log-status.pending { background:rgba(255,214,0,.12); color:var(--yellow); }
-        .log-time {
-          color:var(--dim);
-          font-size:.58rem;
-          margin-left:auto;
+            font-weight:700;
+            font-size:.6rem;
+            min-width:30px;
+            text-align:right;
         }
 
-        .log-entry-body {
-          display:none;
-          border-top:1px solid var(--border);
-        }
-        .log-entry.expanded .log-entry-body { display:block; }
-        .log-tabs {
-          display:flex;
-          border-bottom:1px solid var(--border);
-        }
-        .log-tab {
-          padding:5px 12px;
-          font-family:'Share Tech Mono', monospace;
-          font-size:.6rem;
-          color:var(--dim);
-          cursor:pointer;
-          letter-spacing:.08em;
-          border-bottom:2px solid transparent;
-          transition:all .15s;
-        }
-        .log-tab.active { color:var(--neon-o); border-bottom-color:var(--neon-o); }
-        .log-pane {
-          display:none;
-          padding:10px 12px;
-          font-family:'Share Tech Mono', monospace;
-          font-size:.62rem;
-          line-height:1.6;
-          color:#8bb;
-          max-height:180px;
-          overflow-y:auto;
-          white-space:pre-wrap;
-          word-break:break-all;
-        }
-        .log-pane.active { display:block; }
-        .log-pane::-webkit-scrollbar { width:3px; }
-        .log-pane::-webkit-scrollbar-thumb { background:var(--border); }
-        .json-key { color:var(--neon-o); }
-        .json-str { color:var(--neon-green); }
-        .json-num { color:var(--yellow); }
-        .json-bool { color:var(--neon-x); }
-        .json-null { color:var(--dim); }
+        .log-status.ok { color:var(--neon-green); }
+        .log-status.err { color:var(--neon-x); }
+        .log-status.pending { color:var(--dim); }
 
-        /* Duration bar */
-        .log-duration-bar {
-          height:2px;
-          background:linear-gradient(90deg, var(--neon-green), var(--neon-o));
-          transition:width .5s ease;
-        }
-
-        /* Footer */
         .log-footer {
-          padding:10px 18px;
-          border-top:1px solid var(--border);
-          background:var(--surface2);
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          flex-shrink:0;
+            padding:10px 15px;
+            border-top:1px solid var(--border);
+            font-family:'Share Tech Mono', monospace;
+            font-size:.6rem;
+            display:flex;
+            justify-content:space-around;
         }
+
         .log-stats {
-          display:flex;
-          gap:16px;
-          font-family:'Share Tech Mono', monospace;
-          font-size:.62rem;
-          color:var(--dim);
+            display:flex;
+            gap:15px;
+            width:100%;
         }
-        .log-stat-val { color:var(--text); }
+
+        .log-stat-val {
+            font-weight:700;
+            color:var(--neon-o);
+        }
+
         .log-stat-val.green { color:var(--neon-green); }
         .log-stat-val.red { color:var(--neon-x); }
-
-        @keyframes fadeIn {
-          from{opacity:0;transform:translateY(10px)}
-          to{opacity:1;transform:translateY(0)}
-        }
-
-        /* Responsive tweaks */
-        @media(max-width:820px){
-          .app { grid-template-columns:1fr; grid-template-rows:1fr 280px; height:auto; }
-          .right-panel { border-left:none; border-top:1px solid var(--border); }
-        }
     </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <header>
-    <div class="logo">TIC<span>TAC</span>TOE <span style="color:var(--dim);font-weight:400">// ARCADE</span></div>
+    <div class="logo">TIC <span>TAC</span> TOE</div>
     <div class="status-bar">
         <div class="status-dot" id="dot"></div>
-        <span id="server-status">CONNECTING...</span>
-        <span style="color:var(--border)">|</span>
-        <span id="server-url" style="color:var(--dim)">localhost:8080</span>
+        <span id="server-status">OFFLINE</span>
     </div>
 </header>
 
-<!-- APP LAYOUT -->
 <div class="app">
-
-    <!-- LEFT: MENU / GAME -->
     <div class="left-panel">
 
         <!-- MENU SCREEN -->
         <div id="menu-screen">
-            <div>
-                <div class="menu-title">CHOOSE<br/><span>GAME MODE</span></div>
-                <div class="menu-sub" style="text-align:center;margin-top:8px">// SELECT OPPONENT TYPE</div>
-            </div>
-            <div class="mode-grid">
+            <div class="menu-title">⚡ ARCADE ⚡</div>
+            <div class="menu-subtitle">// SELECT GAME MODE</div>
+            <div class="mode-selection">
                 <button class="mode-btn" onclick="selectMode('HVH')">
                     <div class="mode-icon">👥</div>
                     <div class="mode-info">
                         <div class="mode-label">HUMAN VS HUMAN</div>
-                        <div class="mode-desc">// TWO PLAYERS · LOCAL MULTIPLAYER</div>
+                        <div class="mode-desc">// TWO PLAYERS LOCAL</div>
                     </div>
                     <div class="mode-arrow">→</div>
                 </button>
@@ -817,450 +771,359 @@
 
 <script>
     // ═══════════════════════════════════════════════
-    //  CONFIG
+    // CONFIG
     // ═══════════════════════════════════════════════
     const API_BASE = 'http://localhost:8080/api/game';
 
     // ═══════════════════════════════════════════════
-    //  STATE
+    // STATE - Only UI state, no game logic
     // ═══════════════════════════════════════════════
-    let state = {
-      mode: null,
-      gameId: null,
-      board: Array(9).fill(''),
-      currentPlayer: 'X',
-      status: 'IDLE',
-      winner: null,
-      winningCells: [],
-      scores: { X: 0, O: 0 },
-      autoTimer: null,
-      busy: false,
+    let uiState = {
+        mode: null,
+        gameActive: false,
+        scores: { X: 0, O: 0 },
+        currentGameState: null,
     };
 
     // ═══════════════════════════════════════════════
-    //  LOG STATE
+    // LOG STATE
     // ═══════════════════════════════════════════════
     let logEntries = [];
     let logStats = { total:0, ok:0, err:0, durations:[] };
 
     // ═══════════════════════════════════════════════
-    //  PING SERVER
+    // PING SERVER
     // ═══════════════════════════════════════════════
     async function pingServer() {
-      const dot = document.getElementById('dot');
-      const lbl = document.getElementById('server-status');
-      try {
-        const t0 = performance.now();
-        const r  = await fetch(`${API_BASE}/ping`, { method:'GET' });
-        const ms = Math.round(performance.now() - t0);
-        if(r.ok) {
-          dot.classList.remove('offline');
-          lbl.textContent = `ONLINE · ${ms}ms`;
-          lbl.style.color = 'var(--neon-green)';
-        } else { throw new Error(); }
-      } catch {
-        dot.classList.add('offline');
-        lbl.textContent = 'OFFLINE';
-        lbl.style.color = '#ff4444';
-      }
+        const dot = document.getElementById('dot');
+        const lbl = document.getElementById('server-status');
+        try {
+            const t0 = performance.now();
+            const r = await fetch(`${API_BASE}/state`);
+            const ms = Math.round(performance.now() - t0);
+
+            if (r.ok) {
+                dot.className = 'status-dot online';
+                lbl.textContent = `ONLINE (${ms}ms)`;
+            } else {
+                throw new Error('Server error');
+            }
+        } catch (e) {
+            dot.className = 'status-dot';
+            lbl.textContent = 'OFFLINE';
+        }
+        setTimeout(pingServer, 3000);
     }
+
     pingServer();
-    setInterval(pingServer, 15000);
 
     // ═══════════════════════════════════════════════
-    //  API WRAPPER  ← logs every request
+    // API CALLS - Frontend ONLY calls backend
     // ═══════════════════════════════════════════════
-    async function apiCall(method, endpoint, body = null) {
-      const entryId  = Date.now() + Math.random();
-      const t0       = performance.now();
-      const url      = `${API_BASE}${endpoint}`;
-      const reqBody  = body ? JSON.stringify(body) : null;
 
-      // Add pending log entry
-      addLogEntry(entryId, method, endpoint, reqBody, null, 'pending', 0);
+    async function apiCall(method, endpoint, params = {}) {
+        const url = new URL(`${API_BASE}${endpoint}`);
 
-      try {
-        const res  = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: reqBody,
-        });
-        const ms   = Math.round(performance.now() - t0);
-        const data = await res.json().catch(() => ({}));
-        const ok   = res.ok;
+        if (method === 'GET' || method === 'POST') {
+            Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+        }
 
-        updateLogEntry(entryId, data, ok ? '200 OK' : `${res.status} ERR`, ms, ok);
-        if (!ok) throw new Error(`HTTP ${res.status}`);
-        return data;
+        const logId = Date.now();
+        logAPICall(method, endpoint, logId);
 
-      } catch (err) {
-        const ms = Math.round(performance.now() - t0);
-        updateLogEntry(entryId, { error: err.message }, 'ERROR', ms, false);
-        throw err;
-      }
+        try {
+            const t0 = performance.now();
+            const response = await fetch(url.toString(), { method });
+            const ms = Math.round(performance.now() - t0);
+            const data = await response.json();
+
+            updateLogEntry(logId, data, response.status, ms, response.ok);
+            return { success: response.ok, data };
+        } catch (e) {
+            updateLogEntry(logId, { error: e.message }, 'ERROR', 0, false);
+            return { success: false, error: e.message };
+        }
     }
 
     // ═══════════════════════════════════════════════
-    //  LOG RENDERING
+    // GAME FLOW
     // ═══════════════════════════════════════════════
-    function addLogEntry(id, method, endpoint, reqBody, resBody, statusText, ms) {
-      const entry = { id, method, endpoint, reqBody, resBody, statusText, ms, ts: new Date() };
-      logEntries.unshift(entry);
-      renderLog();
+
+    async function selectMode(mode) {
+        uiState.mode = mode;
+        document.getElementById('menu-screen').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'flex';
+        document.getElementById('mode-badge').textContent = mode;
+
+        // Start game via backend
+        const result = await apiCall('POST', '/start', { mode });
+        if (result.success) {
+            uiState.currentGameState = result.data;
+            renderBoard();
+            updateTurnDisplay();
+
+            // If computer starts (HVC mode with O, or CVC), make computer move
+            if (mode === 'HVC' && result.data.currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 1000);
+            } else if (mode === 'CVC') {
+                setTimeout(makeComputerMove, 1000);
+            }
+        }
     }
 
-    function updateLogEntry(id, resBody, statusText, ms, ok) {
-      const e = logEntries.find(e => e.id === id);
-      if (!e) return;
-      e.resBody    = resBody;
-      e.statusText = statusText;
-      e.ms         = ms;
-      e.ok         = ok;
+    async function cellClick(index) {
+        if (!uiState.gameActive || uiState.currentGameState.gameOver) return;
 
-      logStats.total++;
-      if (ok) logStats.ok++; else logStats.err++;
-      logStats.durations.push(ms);
+        const row = Math.floor(index / 3);
+        const col = index % 3;
 
-      renderLog();
-      renderStats();
+        // Call backend to make move
+        const result = await apiCall('POST', '/move', { position: index });
+
+        if (result.success) {
+            uiState.currentGameState = result.data;
+            renderBoard();
+            updateTurnDisplay();
+
+            // Check if game is over
+            if (result.data.gameOver) {
+                showGameOver(result.data.winner);
+            } else if (uiState.mode !== 'HVH') {
+                // If computer's turn, make computer move
+                setTimeout(makeComputerMove, 1000);
+            }
+        }
     }
 
-    function renderLog() {
-      const list = document.getElementById('log-list');
-      const empty = document.getElementById('log-empty');
-      document.getElementById('log-count').textContent =
-        `${logStats.total} REQUEST${logStats.total !== 1 ? 'S' : ''}`;
+    async function makeComputerMove() {
+        const result = await apiCall('POST', '/move', {});
 
-      if (logEntries.length === 0) {
-        list.innerHTML = '';
-        list.appendChild(empty);
-        return;
-      }
-      if (empty.parentNode) empty.parentNode.removeChild(empty);
+        if (result.success) {
+            uiState.currentGameState = result.data;
+            renderBoard();
+            updateTurnDisplay();
 
-      // Re-render only the first entry if it's new/updated
-      const firstId = logEntries[0].id;
-      const existing = document.getElementById(`log-${firstId}`);
-      if (existing) {
-        existing.replaceWith(buildEntryEl(logEntries[0]));
-      } else {
-        list.prepend(buildEntryEl(logEntries[0]));
-      }
+            if (result.data.gameOver) {
+                showGameOver(result.data.winner);
+            }
+        }
+    }
 
-      // Update all entries' DOM to reflect status change
-      logEntries.forEach(e => {
-        const el = document.getElementById(`log-${e.id}`);
-        if (!el) return;
-        const statusEl = el.querySelector('.log-status');
-        if (!statusEl) return;
-        if (e.statusText === 'pending') {
-          statusEl.className = 'log-status pending';
-          statusEl.textContent = '...';
-        } else if (e.ok) {
-          statusEl.className = 'log-status ok';
-          statusEl.textContent = e.statusText;
+    // ═══════════════════════════════════════════════
+    // UI RENDERING - Only display backend data
+    // ═══════════════════════════════════════════════
+
+    function renderBoard() {
+        const boardEl = document.getElementById('board');
+        boardEl.innerHTML = '';
+
+        const board = uiState.currentGameState.board;
+
+        for (let i = 0; i < 9; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.textContent = board[i] === ' ' ? '' : board[i];
+
+            if (board[i] === 'X') {
+                cell.classList.add('x');
+            } else if (board[i] === 'O') {
+                cell.classList.add('o');
+            }
+
+            if (board[i] === ' ' && !uiState.currentGameState.gameOver) {
+                cell.onclick = () => cellClick(i);
+            } else {
+                cell.classList.add('disabled');
+            }
+
+            boardEl.appendChild(cell);
+        }
+    }
+
+    function updateTurnDisplay() {
+        const current = uiState.currentGameState.currentPlayer;
+        const marker = document.getElementById('turn-marker');
+        const label = document.getElementById('turn-label');
+
+        marker.textContent = current;
+        marker.className = `turn-marker ${current.toLowerCase()}`;
+        label.textContent = current === 'X' ? 'PLAYER 1' : 'PLAYER 2';
+    }
+
+    function showGameOver(winner) {
+        const overlay = document.getElementById('result-overlay');
+        const emoji = document.getElementById('result-emoji');
+        const text = document.getElementById('result-text');
+
+        if (winner === 'Draw') {
+            emoji.textContent = '🤝';
+            text.textContent = 'IT\'S A DRAW!';
         } else {
-          statusEl.className = 'log-status err';
-          statusEl.textContent = e.statusText;
+            emoji.textContent = '🏆';
+            text.textContent = `PLAYER ${winner} WINS!`;
+
+            if (winner === 'X') {
+                uiState.scores.X++;
+            } else {
+                uiState.scores.O++;
+            }
+
+            document.getElementById('score-x').textContent = uiState.scores.X;
+            document.getElementById('score-o').textContent = uiState.scores.O;
         }
-      });
-    }
 
-    function buildEntryEl(e) {
-      const div = document.createElement('div');
-      div.className = 'log-entry';
-      div.id = `log-${e.id}`;
-
-      const ts = e.ts.toTimeString().slice(0,8);
-      const statusClass = e.statusText === 'pending' ? 'pending' : (e.ok ? 'ok' : 'err');
-      const statusText  = e.statusText === 'pending' ? '...' : e.statusText;
-      const barW = e.ms ? Math.min(100, (e.ms / 2000) * 100) : 0;
-      const barColor = e.ms < 300
-        ? 'linear-gradient(90deg,var(--neon-green),var(--neon-o))'
-        : e.ms < 800
-          ? 'linear-gradient(90deg,var(--yellow),var(--neon-o))'
-          : 'linear-gradient(90deg,var(--neon-x),var(--yellow))';
-
-      div.innerHTML = `
-        <div class="log-duration-bar" style="width:${barW}%;background:${barColor}"></div>
-        <div class="log-entry-head" onclick="toggleEntry('${e.id}')">
-          <span class="log-method ${e.method}">${e.method}</span>
-          <span class="log-endpoint">${e.endpoint}</span>
-          <span class="log-status ${statusClass}">${statusText}</span>
-          <span class="log-time">${ts} · ${e.ms}ms</span>
-        </div>
-        <div class="log-entry-body">
-          <div class="log-tabs">
-            <div class="log-tab active" onclick="switchTab(event,'req-${e.id}','${e.id}')">REQUEST</div>
-            <div class="log-tab" onclick="switchTab(event,'res-${e.id}','${e.id}')">RESPONSE</div>
-          </div>
-          <div class="log-pane active" id="req-${e.id}">${formatJson(e.reqBody ? JSON.parse(e.reqBody) : null)}</div>
-          <div class="log-pane" id="res-${e.id}">${formatJson(e.resBody)}</div>
-        </div>`;
-      return div;
-    }
-
-    function toggleEntry(id) {
-      const el = document.getElementById(`log-${id}`);
-      if(el) el.classList.toggle('expanded');
-    }
-
-    function switchTab(ev, paneId, entryId) {
-      const body = document.getElementById(`log-${entryId}`).querySelector('.log-entry-body');
-      body.querySelectorAll('.log-tab').forEach(t => t.classList.remove('active'));
-      body.querySelectorAll('.log-pane').forEach(p => p.classList.remove('active'));
-      ev.target.classList.add('active');
-      document.getElementById(paneId).classList.add('active');
-    }
-
-    function formatJson(obj) {
-      if (!obj && obj !== 0) return '<span class="json-null">null</span>';
-      const str = JSON.stringify(obj, null, 2);
-      return str
-        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-        .replace(/"([^"]+)":/g,'<span class="json-key">"$1"</span>:')
-        .replace(/: "([^"]*)"/g,': <span class="json-str">"$1"</span>')
-        .replace(/: (\d+\.?\d*)/g,': <span class="json-num">$1</span>')
-        .replace(/: (true|false)/g,': <span class="json-bool">$1</span>')
-        .replace(/: null/g,': <span class="json-null">null</span>');
-    }
-
-    function renderStats() {
-      document.getElementById('stat-total').textContent = logStats.total;
-      document.getElementById('stat-ok').textContent    = logStats.ok;
-      document.getElementById('stat-err').textContent   = logStats.err;
-      const avg = logStats.durations.length
-        ? Math.round(logStats.durations.reduce((a,b)=>a+b,0)/logStats.durations.length)
-        : null;
-      document.getElementById('stat-avg').textContent = avg ? `${avg}ms` : '—';
-    }
-
-    function clearLog() {
-      logEntries = [];
-      logStats   = { total:0, ok:0, err:0, durations:[] };
-      const list = document.getElementById('log-list');
-      list.innerHTML = '';
-      const empty = document.getElementById('log-empty') || createEmptyEl();
-      list.appendChild(empty);
-      renderStats();
-      document.getElementById('log-count').textContent = '0 REQUESTS';
-    }
-
-    function createEmptyEl() {
-      const d = document.createElement('div');
-      d.className = 'log-empty';
-      d.id = 'log-empty';
-      d.innerHTML = `<div class="log-empty-icon">📭</div><span>NO REQUESTS YET</span><span style="font-size:.6rem;opacity:.5">// START A GAME TO SEE API CALLS</span>`;
-      return d;
-    }
-
-    // ═══════════════════════════════════════════════
-    //  MENU / NAVIGATION
-    // ═══════════════════════════════════════════════
-    function selectMode(mode) {
-      state.mode = mode;
-      document.getElementById('menu-screen').style.display = 'none';
-      const gs = document.getElementById('game-screen');
-      gs.classList.add('visible');
-
-      const labels = { HVH:'HUMAN VS HUMAN', HVC:'HUMAN VS CPU', CVC:'CPU VS CPU' };
-      document.getElementById('mode-badge').textContent = labels[mode];
-      resetScores();
-      startGame();
-    }
-
-    function goBack() {
-      clearAuto();
-      state.mode   = null;
-      state.gameId = null;
-      document.getElementById('game-screen').classList.remove('visible');
-      document.getElementById('menu-screen').style.display = 'flex';
-      document.getElementById('result-overlay').classList.remove('show');
-      document.getElementById('computing-bar').classList.remove('show');
-    }
-
-    function resetScores() {
-      state.scores = { X:0, O:0 };
-      document.getElementById('score-x').textContent = 0;
-      document.getElementById('score-o').textContent = 0;
-    }
-
-    // ═══════════════════════════════════════════════
-    //  BOARD
-    // ═══════════════════════════════════════════════
-    function buildBoard() {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-      for (let i = 0; i < 9; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.index = i;
-        cell.addEventListener('click', () => onCellClick(i));
-        board.appendChild(cell);
-      }
-    }
-
-    function renderBoard(boardArr, winCells = []) {
-      const cells = document.querySelectorAll('.cell');
-      cells.forEach((cell, i) => {
-        const val = boardArr[i];
-        cell.textContent  = val || '';
-        cell.className    = 'cell';
-        if (val)      cell.classList.add('taken', val === 'X' ? 'x-cell' : 'o-cell');
-        if (winCells.includes(i)) cell.classList.add('win-cell');
-      });
-    }
-
-    function setTurnDisplay(player, status) {
-      const marker = document.getElementById('turn-marker');
-      const label  = document.getElementById('turn-label');
-      if (status !== 'IN_PROGRESS') {
-        label.textContent = '';
-        return;
-      }
-      marker.textContent  = player;
-      marker.className    = `turn-marker ${player.toLowerCase()}`;
-      const mode = state.mode;
-      if (mode === 'HVH') {
-        label.textContent = player === 'X' ? 'PLAYER 1' : 'PLAYER 2';
-      } else if (mode === 'HVC') {
-        label.textContent = player === 'X' ? 'YOUR TURN' : 'CPU THINKING...';
-      } else {
-        label.textContent = `CPU ${player}`;
-      }
-    }
-
-    // ═══════════════════════════════════════════════
-    //  GAME FLOW  ← all delegated to Java API
-    // ═══════════════════════════════════════════════
-    async function startGame() {
-      clearAuto();
-      state.busy = false;
-      buildBoard();
-      document.getElementById('result-overlay').classList.remove('show');
-      document.getElementById('computing-bar').classList.remove('show');
-
-      try {
-        const gs = await apiCall('POST', '/start', { mode: state.mode });
-        applyGameState(gs);
-        // CVC: auto-play both sides
-        if (state.mode === 'CVC' && gs.status === 'IN_PROGRESS') {
-          scheduleAuto();
-        }
-      } catch (e) {
-        console.error('startGame failed', e);
-      }
+        overlay.classList.add('show');
     }
 
     async function playAgain() {
-      document.getElementById('result-overlay').classList.remove('show');
-      await startGame();
-    }
+        const result = await apiCall('POST', '/reset', {});
+        if (result.success) {
+            uiState.currentGameState = result.data;
+            document.getElementById('result-overlay').classList.remove('show');
+            renderBoard();
+            updateTurnDisplay();
 
-    async function onCellClick(index) {
-      if (state.busy) return;
-      if (state.status !== 'IN_PROGRESS') return;
-      if (state.board[index] !== '') return;
-      if (state.mode === 'CVC') return;
-      if (state.mode === 'HVC' && state.currentPlayer !== 'X') return;
-
-      await sendMove(index, state.currentPlayer);
-
-      // HVC: after human move, trigger computer move
-      if (state.mode === 'HVC' && state.status === 'IN_PROGRESS') {
-        await triggerComputerMove();
-      }
-    }
-
-    async function sendMove(index, player) {
-      state.busy = true;
-      try {
-        const gs = await apiCall('POST', '/move', {
-          gameId: state.gameId,
-          index,
-          player,
-          // row: Math.floor(index / 3),
-          // col: index % 3,
-        });
-        applyGameState(gs);
-      } catch (e) {
-        console.error('move failed', e);
-      }
-      state.busy = false;
-    }
-
-    async function triggerComputerMove() {
-      if (state.status !== 'IN_PROGRESS') return;
-      state.busy = true;
-      document.getElementById('computing-bar').classList.add('show');
-      try {
-        const gs = await apiCall('POST', '/computer-move', {
-          gameId: state.gameId,
-          player: state.currentPlayer,
-        });
-        applyGameState(gs);
-      } catch (e) {
-        console.error('computer-move failed', e);
-      }
-      document.getElementById('computing-bar').classList.remove('show');
-      state.busy = false;
-    }
-
-    function scheduleAuto() {
-      clearAuto();
-      state.autoTimer = setInterval(async () => {
-        if (state.busy || state.status !== 'IN_PROGRESS') {
-          clearAuto(); return;
+            if (uiState.mode === 'HVC' && result.data.currentPlayer === 'O') {
+                setTimeout(makeComputerMove, 1000);
+            } else if (uiState.mode === 'CVC') {
+                setTimeout(makeComputerMove, 1000);
+            }
         }
-        await triggerComputerMove();
-        if (state.status !== 'IN_PROGRESS') clearAuto();
-      }, 950);
     }
 
-    function clearAuto() {
-      if (state.autoTimer) { clearInterval(state.autoTimer); state.autoTimer = null; }
+    function goBack() {
+        document.getElementById('menu-screen').style.display = 'flex';
+        document.getElementById('game-screen').style.display = 'none';
+        uiState.mode = null;
+        uiState.gameActive = false;
+        logEntries = [];
+        logStats = { total:0, ok:0, err:0, durations:[] };
+        renderLog();
     }
 
-    function applyGameState(gs) {
-      if (!gs) return;
-      state.gameId        = gs.gameId        ?? state.gameId;
-      state.board         = gs.board         ?? state.board;
-      state.currentPlayer = gs.currentPlayer ?? state.currentPlayer;
-      state.status        = gs.status        ?? state.status;
-      state.winner        = gs.winner        ?? null;
-      state.winningCells  = gs.winningCells  ?? [];
+    // ═══════════════════════════════════════════════
+    // API LOG FUNCTIONS
+    // ═══════════════════════════════════════════════
 
-      renderBoard(state.board, state.winningCells);
-      setTurnDisplay(state.currentPlayer, state.status);
-
-      if (state.status === 'WIN' || state.status === 'DRAW') {
-        handleGameEnd();
-      }
+    function logAPICall(method, endpoint, id) {
+        const entry = {
+            id,
+            method,
+            endpoint,
+            statusText: 'pending',
+            resBody: null,
+            ms: 0,
+            ok: null,
+            ts: new Date()
+        };
+        logEntries.unshift(entry);
+        renderLog();
     }
 
-    function handleGameEnd() {
-      clearAuto();
-      const overlay = document.getElementById('result-overlay');
-      const emoji   = document.getElementById('result-emoji');
-      const text    = document.getElementById('result-text');
-      const sub     = document.getElementById('result-sub');
+    function updateLogEntry(id, resBody, statusText, ms, ok) {
+        const e = logEntries.find(e => e.id === id);
+        if (!e) return;
 
-      if (state.status === 'DRAW') {
-        emoji.textContent = '🤝';
-        text.textContent  = 'DRAW!';
-        text.style.color  = 'var(--yellow)';
-        sub.textContent   = '// NO WINNER THIS TIME';
-      } else {
-        const w = state.winner;
-        state.scores[w]++;
-        document.getElementById(`score-${w.toLowerCase()}`).textContent = state.scores[w];
-        emoji.textContent = w === 'X' ? '🔥' : '⚡';
-        text.textContent  = `PLAYER ${w} WINS!`;
-        text.style.color  = w === 'X' ? 'var(--neon-x)' : 'var(--neon-o)';
-        sub.textContent   = '// GAME OVER';
-      }
-      overlay.classList.add('show');
+        e.resBody = resBody;
+        e.statusText = statusText;
+        e.ms = ms;
+        e.ok = ok;
+
+        logStats.total++;
+        if (ok) logStats.ok++; else logStats.err++;
+        logStats.durations.push(ms);
+
+        renderLog();
+        renderStats();
+    }
+
+    function renderLog() {
+        const list = document.getElementById('log-list');
+        const empty = document.getElementById('log-empty');
+        document.getElementById('log-count').textContent =
+            `${logStats.total} REQUEST${logStats.total !== 1 ? 'S' : ''}`;
+
+        if (logEntries.length === 0) {
+            list.innerHTML = '';
+            list.appendChild(empty);
+            return;
+        }
+
+        if (empty.parentNode) empty.parentNode.removeChild(empty);
+
+        const firstId = logEntries[0].id;
+        const existing = document.getElementById(`log-${firstId}`);
+        if (existing) {
+            existing.replaceWith(buildEntryEl(logEntries[0]));
+        } else {
+            list.prepend(buildEntryEl(logEntries[0]));
+        }
+
+        logEntries.forEach(e => {
+            const el = document.getElementById(`log-${e.id}`);
+            if (!el) return;
+            const statusEl = el.querySelector('.log-status');
+            if (!statusEl) return;
+
+            if (e.statusText === 'pending') {
+                statusEl.className = 'log-status pending';
+                statusEl.textContent = '...';
+            } else if (e.ok) {
+                statusEl.className = 'log-status ok';
+                statusEl.textContent = e.statusText;
+            } else {
+                statusEl.className = 'log-status err';
+                statusEl.textContent = e.statusText;
+            }
+        });
+    }
+
+    function buildEntryEl(e) {
+        const div = document.createElement('div');
+        div.className = 'log-entry';
+        div.id = `log-${e.id}`;
+
+        const ts = e.ts.toTimeString().slice(0,8);
+        const statusClass = e.statusText === 'pending' ? 'pending' : (e.ok ? 'ok' : 'err');
+        const statusText = e.statusText === 'pending' ? '...' : e.statusText;
+        const barW = e.ms ? Math.min(100, (e.ms / 2000) * 100) : 0;
+
+        div.innerHTML = `
+            <div class="log-entry-head">
+                <span class="log-method ${e.method}">${e.method}</span>
+                <span class="log-endpoint">${e.endpoint}</span>
+                <span class="log-status ${statusClass}">${statusText}</span>
+            </div>
+            <div style="padding:0 12px 8px;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--dim);display:flex;gap:8px;">
+                <span>${ts}</span>
+                <span>${e.ms}ms</span>
+                <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden;">
+                    <div style="height:100%;width:${barW}%;background:linear-gradient(90deg,var(--neon-o),var(--neon-x));"></div>
+                </div>
+            </div>
+        `;
+
+        return div;
+    }
+
+    function renderStats() {
+        document.getElementById('stat-total').textContent = logStats.total;
+        document.getElementById('stat-ok').textContent = logStats.ok;
+        document.getElementById('stat-err').textContent = logStats.err;
+
+        if (logStats.durations.length > 0) {
+            const avg = Math.round(logStats.durations.reduce((a,b) => a+b) / logStats.durations.length);
+            document.getElementById('stat-avg').textContent = avg + 'ms';
+        }
+    }
+
+    function clearLog() {
+        logEntries = [];
+        logStats = { total:0, ok:0, err:0, durations:[] };
+        renderLog();
+        renderStats();
     }
 </script>
+
 </body>
 </html>
