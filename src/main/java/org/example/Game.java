@@ -1,21 +1,27 @@
 package org.example;
+
+import java.util.UUID;
+
 public class Game {
+	private String gameId;
 	private Player playerOne;
 	private Player playerTwo;
 	private Mark currentPlayer;
-	private Board board = new Board();
-//	private String gameMode; // "hvh", "hvc", "cvc"
+	private Board board;
+	private String status;
+	private String winner;
 
 	public Game(Player playerOne, Player playerTwo) {
+		this.gameId = UUID.randomUUID().toString(); // Generate unique game ID
 		this.playerOne = playerOne;
 		this.playerTwo = playerTwo;
-//		this.gameMode = gameMode;
 		this.currentPlayer = Mark.X;
+		this.board = new Board();
+		this.status = "ongoing"; // Initial game status
+		this.winner = null; // No winner at the start
 	}
 
-	// ... existing methods ...
-
-	// NEW: Get board state as flat String array for JSON response
+	// Get board state as flat String array for JSON response
 	public String[] getBoardState() {
 		Mark[][] field = board.getField();
 		String[] flat = new String[9];
@@ -28,57 +34,60 @@ public class Game {
 		return flat;
 	}
 
-	// NEW: Apply move from UI
-	public boolean applyMove(int row, int col) {
+	// Apply move from UI (REST API)
+	public boolean applyMove(int index) {
+		int row = index / 3; // Calculate row based on index
+		int col = index % 3; // Calculate column based on index
+
 		Mark[][] field = board.getField();
 
 		// Validate move
 		if (row < 0 || row > 2 || col < 0 || col > 2 || field[row][col] != Mark.EMPTY) {
-			return false;
+			return false; // Invalid move
 		}
 
 		// Apply human move
 		field[row][col] = currentPlayer;
-		switchTurn();
 
-		// If next player is computer, auto-play
-		Player next = (currentPlayer == Mark.X) ? playerOne : playerTwo;
-		if (next instanceof ComputerPlayer && !board.checkForWinAndDrow()) {
-			next.doMove(field);
-			switchTurn();
+		// Check for win or draw
+		if (board.checkForWinAndDrow()) {
+			if (board.getWinner() != null) {
+				winner = currentPlayer.toString();
+				status = "win"; // Update status to win
+			} else {
+				status = "draw"; // Update status to draw
+			}
+		} else {
+			switchTurn(); // Switch to the next player
 		}
 
-		return true;
+		return true; // Move applied successfully
 	}
 
-	// NEW: Switch turn
+	// Switch turn
 	private void switchTurn() {
 		currentPlayer = (currentPlayer == Mark.X) ? Mark.O : Mark.X;
 	}
 
-	// NEW: Get current player info
+	// Get current player info
 	public Player getCurrentPlayerObj() {
 		return (currentPlayer == Mark.X) ? playerOne : playerTwo;
 	}
 
-	// NEW: Get game status
+	// Get game status
 	public String getGameStatus() {
-		if (!board.checkForWinAndDrow()) {
-			return "ongoing";
-		}
-		Mark winner = board.getWinner();
-		return winner != null ? "win" : "draw";
+		return status; // Return current game status
 	}
 
-	// NEW: Get winner name
+	// Get winner name
 	public String getWinnerName() {
-		Mark winner = board.getWinner();
 		if (winner == null) return null;
-		return (winner == Mark.X) ? playerOne.getNamePlayer() : playerTwo.getNamePlayer();
+		return (winner.equals("X")) ? playerOne.getNamePlayer() : playerTwo.getNamePlayer();
 	}
 
+	// Getters for REST API
+	public String getGameId() { return gameId; }
 	public Mark getCurrentPlayer() { return currentPlayer; }
 	public Player getPlayerOne() { return playerOne; }
 	public Player getPlayerTwo() { return playerTwo; }
 }
-

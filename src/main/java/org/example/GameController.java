@@ -1,79 +1,64 @@
 package org.example;
 
 import org.springframework.web.bind.annotation.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import java.util.Map;
+
 import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/game")
-@CrossOrigin(origins = "*")
 public class GameController {
+    private Map<String, Game> games = new HashMap<>();
 
-    @Autowired
-    private GameSessionManager sessionManager;
-
-    // Start a new game
     @PostMapping("/start")
-    public Map<String, Object> startGame(@RequestBody Map<String, String> request) {
-        String mode = request.get("mode");
-        String p1Name = request.getOrDefault("p1Name", "Player 1");
-        String p2Name = request.getOrDefault("p2Name", "Player 2");
+    public Game startGame(@RequestBody PlayerNames playerNames) {
+        Player playerOne;
+        playerOne = new Player("", Mark.X) {
+            @Override
+            public void doMove(Mark[][] field) {
 
-        String sessionId = sessionManager.createGame(p1Name, p2Name, mode);
-        Game game = sessionManager.getGame(sessionId);
+            }
+        };
+        Player playerTwo;
+        playerTwo = new Player("", Mark.O) {
+            @Override
+            public void doMove(Mark[][] field) {
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("sessionId", sessionId);
-        response.put("board", game.getBoardState());
-        response.put("currentPlayer", game.getCurrentPlayer().toString());
-        response.put("p1Name", game.getPlayerOne().getNamePlayer());
-        response.put("p2Name", game.getPlayerTwo().getNamePlayer());
-        response.put("status", "ongoing");
-        return response;
+            }
+        };
+        Game game = new Game(playerOne, playerTwo);
+        games.put(game.getGameId(), game);
+        return game;
     }
 
-    // Make a move
-    @PostMapping("/move")
-    public Map<String, Object> makeMove(@RequestBody Map<String, Object> request) {
-        String sessionId = (String) request.get("sessionId");
-        int row = ((Number) request.get("row")).intValue();
-        int col = ((Number) request.get("col")).intValue();
-
-        Game game = sessionManager.getGame(sessionId);
-
-        // Apply move
-        if (!game.applyMove(row, col)) {
-            Map<String, Object> error = new HashMap<>();
-            error.put("error", "Invalid move");
-            return error;
+    @PostMapping("/{gameId}/move")
+    public Game makeMove(@PathVariable String gameId, @RequestBody MoveRequest moveRequest) {
+        Game game = games.get(gameId);
+        if (game != null) {
+            boolean validMove = game.applyMove(moveRequest.getIndex());
+            // Optionally check if the game is over after the move
+            if (!validMove) {
+                throw new IllegalArgumentException("Invalid move. Please try again.");
+            }
+        } else {
+            throw new IllegalArgumentException("Game not found.");
         }
+        return game;
+    }
 
-        // Check game status
-        String status = game.getGameStatus();
-        String winner = game.getWinnerName();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("board", game.getBoardState());
-        response.put("currentPlayer", game.getCurrentPlayer().toString());
-        response.put("status", status);
-        if (winner != null) {
-            response.put("winner", winner);
+    @GetMapping("/{gameId}")
+    public Game getGameState(@PathVariable String gameId) {
+        Game game = games.get(gameId);
+        if (game == null) {
+            throw new IllegalArgumentException("Game not found.");
         }
-        return response;
+        return game;
     }
 
-    // Reset game
-    @PostMapping("/reset")
-    public Map<String, String> resetGame(@RequestBody Map<String, String> request) {
-        String sessionId = request.get("sessionId");
-        sessionManager.removeGame(sessionId);
-        return Map.of("message", "Game reset successfully");
-    }
-
-    // Health check
-    @GetMapping("/health")
-    public Map<String, String> health() {
-        return Map.of("status", "✅ Tic-Tac-Toe server is running");
+    @PostMapping("/{gameId}/reset")
+    public Game resetGame(@PathVariable String gameId) {
+        Game game = new Game(games.get(gameId).getPlayerOne(), games.get(gameId).getPlayerTwo());
+        games.put(gameId, game);
+        return game;
     }
 }
