@@ -14,14 +14,6 @@ public class ComputerPlayer extends Player {
         }
     }
 
-    /**
-     * Very simple AI:
-     * 1) win if possible
-     * 2) block opponent win
-     * 3) take center
-     * 4) take a corner
-     * 5) take any empty
-     */
     private int[] findBestMove(Mark[][] field) {
         Mark me = getMark();
         Mark opp = (me == Mark.X) ? Mark.O : Mark.X;
@@ -49,7 +41,6 @@ public class ComputerPlayer extends Player {
                 if (field[r][c] == Mark.EMPTY) return new int[]{r, c};
             }
         }
-
         return null;
     }
 
@@ -66,13 +57,5 @@ public class ComputerPlayer extends Player {
             }
         }
         return null;
-    }
-
-    @Override
-    public String toString() {
-        return "ComputerPlayer{" +
-                "name='" + getNamePlayer() + '\'' +
-                ", mark=" + getMark() +
-                '}';
     }
 }

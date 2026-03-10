@@ -2,14 +2,14 @@ package org.example;
 
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class GameSessionManager {
 
-    private final Map<String, Game> sessions = new HashMap<>();
+    private final Map<String, Game> sessions = new ConcurrentHashMap<>();
 
     public String createGame(String p1Name, String p2Name, String mode) {
         String m = (mode == null) ? "" : mode.trim().toUpperCase();

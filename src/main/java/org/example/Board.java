@@ -16,9 +16,7 @@ public class Board {
         return field;
     }
 
-    /**
-     * @return Mark.X or Mark.O if there is a winner; null if no winner.
-     */
+    /** @return Mark.X or Mark.O if winner exists; otherwise null. */
     public Mark getWinner() {
         // rows
         for (int r = 0; r < 3; r++) {
@@ -39,13 +37,11 @@ public class Board {
         if (field[0][2] != Mark.EMPTY && field[0][2] == field[1][1] && field[1][1] == field[2][0]) {
             return field[0][2];
         }
-
         return null;
     }
 
     public boolean isDraw() {
         if (getWinner() != null) return false;
-
         for (int r = 0; r < 3; r++) {
             for (int c = 0; c < 3; c++) {
                 if (field[r][c] == Mark.EMPTY) return false;
@@ -70,7 +66,6 @@ public class Board {
         // diagonals
         if (f[0][0] == m && f[1][1] == m && f[2][2] == m) return true;
         if (f[0][2] == m && f[1][1] == m && f[2][0] == m) return true;
-
         return false;
     }
 }

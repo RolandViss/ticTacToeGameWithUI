@@ -3,12 +3,10 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Tic Tac Toe (Backend-driven)</title>
+    <title>Tic Tac Toe (Backend-driven + SSE)</title>
     <style>
         :root{
           --bg:#0b0f19;
-          --card:#121a2a;
-          --card2:#0f1626;
           --text:#e8edf7;
           --muted:#98a3b8;
           --x:#6ee7ff;
@@ -24,7 +22,7 @@
         html,body{height:100%}
         body{
           margin:0;
-          font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+          font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
           background: radial-gradient(1000px 500px at 20% 0%, rgba(110,231,255,.12), transparent 55%),
                       radial-gradient(900px 500px at 80% 10%, rgba(255,139,211,.10), transparent 55%),
                       radial-gradient(900px 700px at 50% 100%, rgba(54,211,153,.08), transparent 60%),
@@ -35,26 +33,16 @@
           justify-content:center;
           padding:22px;
         }
-        .app{
-          width:min(980px, 100%);
-          display:grid;
-          gap:16px;
-          grid-template-columns: 1fr;
-        }
+        .app{ width:min(1020px, 100%); display:grid; gap:16px; }
         .topbar{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:12px;
+          display:flex; align-items:center; justify-content:space-between; gap:12px;
           padding:14px 16px;
           background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
           border:1px solid var(--border);
           border-radius: var(--radius);
           box-shadow: var(--shadow);
         }
-        .brand{
-          display:flex; align-items:center; gap:12px;
-        }
+        .brand{display:flex; align-items:center; gap:12px;}
         .logo{
           width:40px;height:40px;border-radius:14px;
           background:
@@ -74,22 +62,12 @@
           background: rgba(255,255,255,.04);
           white-space:nowrap;
         }
-        .dot{
-          width:8px; height:8px; border-radius:50%;
-          background: var(--warn);
-          box-shadow: 0 0 0 4px rgba(251,191,36,.12);
-        }
-        .dot.ok{ background: var(--ok); box-shadow:0 0 0 4px rgba(54,211,153,.12);}
-        .dot.bad{ background: var(--bad); box-shadow:0 0 0 4px rgba(248,114,114,.12);}
+        .dot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px rgba(251,191,36,.12);}
+        .dot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(54,211,153,.12);}
+        .dot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(248,114,114,.12);}
 
-        .grid{
-          display:grid;
-          grid-template-columns: 360px 1fr;
-          gap:16px;
-        }
-        @media (max-width: 880px){
-          .grid{ grid-template-columns: 1fr; }
-        }
+        .grid{ display:grid; grid-template-columns: 380px 1fr; gap:16px; }
+        @media (max-width: 920px){ .grid{ grid-template-columns: 1fr; } }
 
         .card{
           background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
@@ -98,38 +76,27 @@
           box-shadow: var(--shadow);
           padding:16px;
         }
-        .card h2{
-          margin:0 0 10px;
-          font-size:14px;
-          letter-spacing:.3px;
-          color: rgba(232,237,247,.92);
-        }
+        .card h2{ margin:0 0 10px; font-size:14px; letter-spacing:.3px; color: rgba(232,237,247,.92); }
         .muted{color:var(--muted)}
         .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
         .row + .row{margin-top:10px}
 
-        .modes{
-          display:grid;
-          grid-template-columns: 1fr;
-          gap:10px;
-        }
+        .modes{display:grid; gap:10px;}
         .modeBtn{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:12px;
-          padding:12px 12px;
+          display:flex; align-items:center; justify-content:space-between;
+          gap:12px; padding:12px 12px;
           border-radius: 14px;
           border:1px solid var(--border);
           background: rgba(255,255,255,.04);
           color:var(--text);
           cursor:pointer;
           transition: transform .08s ease, background .12s ease, border-color .12s ease;
+          text-align:left;
         }
         .modeBtn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.06);}
         .modeBtn.selected{ border-color: rgba(110,231,255,.45); background: rgba(110,231,255,.08); }
-        .modeLeft{display:flex; flex-direction:column; gap:2px}
-        .modeTitle{font-weight:700; font-size:13px}
+        .modeLeft{display:flex; flex-direction:column; gap:2px; min-width:0}
+        .modeTitle{font-weight:800; font-size:13px}
         .modeDesc{font-size:12px; color:var(--muted)}
         .badge{
           font-size:11px; color: rgba(232,237,247,.85);
@@ -139,6 +106,21 @@
           background: rgba(255,255,255,.04);
           white-space:nowrap;
         }
+
+        .pill{
+          font-size:11px;
+          color: rgba(232,237,247,.88);
+          border:1px solid var(--border);
+          padding:6px 10px;
+          border-radius:999px;
+          background: rgba(255,255,255,.04);
+          white-space:nowrap;
+          max-width:100%;
+          overflow:hidden;
+          text-overflow:ellipsis;
+        }
+        .pill.x{ border-color: rgba(110,231,255,.45); background: rgba(110,231,255,.10); }
+        .pill.o{ border-color: rgba(255,139,211,.45); background: rgba(255,139,211,.10); }
 
         .fields{display:grid; gap:10px; margin-top:10px}
         label{font-size:12px; color:var(--muted)}
@@ -152,6 +134,7 @@
           outline:none;
         }
         input:focus{ border-color: rgba(110,231,255,.5); box-shadow: 0 0 0 4px rgba(110,231,255,.10); }
+
         .btnRow{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
         button{
           padding:10px 12px;
@@ -160,7 +143,7 @@
           background: rgba(255,255,255,.05);
           color:var(--text);
           cursor:pointer;
-          font-weight:600;
+          font-weight:800;
           transition: transform .08s ease, background .12s ease, border-color .12s ease;
         }
         button:hover{ transform: translateY(-1px); background: rgba(255,255,255,.07); }
@@ -168,56 +151,42 @@
         button.danger{ border-color: rgba(248,114,114,.55); background: rgba(248,114,114,.10);}
         button:disabled{opacity:.55; cursor:not-allowed; transform:none}
 
-        .boardWrap{
-          display:grid;
-          gap:12px;
-        }
+        .boardWrap{display:grid; gap:12px;}
         .hud{
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap:10px;
-          flex-wrap:wrap;
+          display:flex; align-items:center; justify-content:space-between;
+          gap:10px; flex-wrap:wrap;
           padding:10px 12px;
           border-radius: 14px;
           border:1px solid var(--border);
           background: rgba(255,255,255,.04);
         }
-        .turn{
-          display:flex; align-items:center; gap:10px;
-          font-size:13px;
-        }
-        .pill{
-          padding:6px 10px;
-          border-radius:999px;
-          border:1px solid var(--border);
-          background: rgba(255,255,255,.04);
-          font-size:12px;
-          color: rgba(232,237,247,.92);
-          white-space:nowrap;
-        }
-        .pill.x{ border-color: rgba(110,231,255,.45); background: rgba(110,231,255,.10); }
-        .pill.o{ border-color: rgba(255,139,211,.45); background: rgba(255,139,211,.10); }
-
-        .scores{
-          display:flex; gap:10px; align-items:center; flex-wrap:wrap;
-          font-size:12px; color:var(--muted);
-        }
+        .turn{ display:flex; align-items:center; gap:10px; font-size:13px; min-width:0; }
+        .turnText{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        .scores{display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:12px; color:var(--muted);}
         .scoreBox{
           display:flex; align-items:center; gap:8px;
           padding:6px 10px;
           border-radius:999px;
           border:1px solid var(--border);
           background: rgba(255,255,255,.04);
+          max-width: 100%;
         }
-        .scoreMark{font-weight:800}
+        .scoreBox .name{
+          max-width: 140px;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          white-space:nowrap;
+          display:inline-block;
+          vertical-align:bottom;
+        }
+        .scoreMark{font-weight:1000}
         .scoreMark.x{color:var(--x)}
         .scoreMark.o{color:var(--o)}
-        .scoreNum{color:rgba(232,237,247,.92); font-weight:700}
+        .scoreNum{color:rgba(232,237,247,.92); font-weight:900}
 
         .board{
           aspect-ratio: 1 / 1;
-          width: min(520px, 100%);
+          width: min(560px, 100%);
           margin-inline:auto;
           display:grid;
           grid-template-columns: repeat(3, 1fr);
@@ -226,14 +195,10 @@
           border-radius: var(--radius);
           border:1px solid var(--border);
           background: rgba(255,255,255,.03);
-          position:relative;
         }
         .cell{
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          font-size:48px;
-          font-weight:900;
+          display:flex; align-items:center; justify-content:center;
+          font-size:52px; font-weight:1000;
           border-radius: 16px;
           border:1px solid var(--border);
           background: rgba(0,0,0,.18);
@@ -247,11 +212,8 @@
         .cell.o{ color: var(--o); border-color: rgba(255,139,211,.35); background: rgba(255,139,211,.06); }
 
         .overlay{
-          position:fixed;
-          inset:0;
-          display:none;
-          align-items:center;
-          justify-content:center;
+          position:fixed; inset:0;
+          display:none; align-items:center; justify-content:center;
           background: rgba(0,0,0,.55);
           backdrop-filter: blur(6px);
           padding:22px;
@@ -280,9 +242,22 @@
         .bigMark.o{ color:var(--o); border-color: rgba(255,139,211,.35); background: rgba(255,139,211,.08); }
         .bigMark.d{ color: rgba(232,237,247,.85); }
 
-        .tiny{font-size:11px; color:var(--muted)}
-        .hidden{display:none}
         .sep{height:1px; background: var(--border); margin:14px 0}
+        .netGrid{display:grid; grid-template-columns: 1fr; gap:8px;}
+        .netItem{
+          display:flex; align-items:center; justify-content:space-between;
+          gap:10px; padding:10px 10px;
+          border-radius:14px; border:1px solid var(--border);
+          background: rgba(255,255,255,.04);
+          font-size:12px;
+        }
+        .netLeft{display:flex; align-items:center; gap:10px; min-width:0}
+        .netLabel{font-weight:900; letter-spacing:.2px}
+        .netValue{color: rgba(232,237,247,.92); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+        .netValue.ell{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+        .tinyDot{width:8px;height:8px;border-radius:50%;background:var(--warn);box-shadow:0 0 0 4px rgba(251,191,36,.12);}
+        .tinyDot.ok{background:var(--ok);box-shadow:0 0 0 4px rgba(54,211,153,.12);}
+        .tinyDot.bad{background:var(--bad);box-shadow:0 0 0 4px rgba(248,114,114,.12);}
     </style>
 </head>
 
@@ -293,25 +268,25 @@
             <div class="logo" aria-hidden="true"></div>
             <div>
                 <h1>Tic Tac Toe</h1>
-                <p>Frontend is UI only. All game logic is on the Java backend.</p>
+                <p>Backend-driven. Human moves via API. CPU-vs-CPU animated via SSE push.</p>
             </div>
         </div>
-        <div class="status" id="serverStatus">
+        <div class="status">
             <span class="dot" id="serverDot"></span>
             <span id="serverText">Checking server…</span>
         </div>
     </div>
 
     <div class="grid">
-        <!-- LEFT: Setup / Controls -->
+        <!-- LEFT -->
         <div class="card">
-            <h2>Game Setup</h2>
+            <h2>Setup</h2>
 
             <div class="modes" id="modeGrid">
                 <button class="modeBtn" data-mode="HH" type="button">
                     <div class="modeLeft">
                         <div class="modeTitle">Human vs Human</div>
-                        <div class="modeDesc">Two players on the same device</div>
+                        <div class="modeDesc">Two players (X and O)</div>
                     </div>
                     <span class="badge">HH</span>
                 </button>
@@ -319,7 +294,7 @@
                 <button class="modeBtn" data-mode="HC" type="button">
                     <div class="modeLeft">
                         <div class="modeTitle">Human vs CPU</div>
-                        <div class="modeDesc">Backend auto-plays CPU moves</div>
+                        <div class="modeDesc">You (X) vs CPU (O)</div>
                     </div>
                     <span class="badge">HC</span>
                 </button>
@@ -327,7 +302,7 @@
                 <button class="modeBtn" data-mode="CC" type="button">
                     <div class="modeLeft">
                         <div class="modeTitle">CPU vs CPU</div>
-                        <div class="modeDesc">Animated using /api/game/cpuStep</div>
+                        <div class="modeDesc">SSE push animation</div>
                     </div>
                     <span class="badge">CC</span>
                 </button>
@@ -337,55 +312,69 @@
 
             <div class="row" style="justify-content:space-between">
                 <div class="pill" id="modeBadge">No mode selected</div>
-                <div class="tiny">API: <span class="muted">/api/game/start</span> · <span class="muted">/move</span> · <span class="muted">/cpuStep</span></div>
+                <div class="pill" id="streamBadge">Stream: OFF</div>
             </div>
 
-            <div class="fields" id="nameFields">
-                <div>
-                    <label for="p1Name">Player X name</label>
-                    <input id="p1Name" placeholder="e.g. Alice" maxlength="18" />
-                </div>
-                <div>
-                    <label for="p2Name">Player O name</label>
-                    <input id="p2Name" placeholder="e.g. Bob" maxlength="18" />
-                </div>
-                <div class="tiny">In <b>HC</b>, Player O is CPU. In <b>CC</b>, both are CPU.</div>
-            </div>
+            <div class="fields" id="nameFields"></div>
 
             <div class="btnRow">
-                <button class="primary" id="startBtn" type="button" disabled>Start game</button>
+                <button class="primary" id="startBtn" type="button" disabled>Start</button>
                 <button id="playAgainBtn" type="button" disabled>Play again</button>
-                <button class="danger" id="resetBtn" type="button" disabled>Reset session</button>
+                <button class="danger" id="resetBtn" type="button" disabled>Reset</button>
             </div>
 
             <div class="sep"></div>
 
-            <div class="tiny">
-                Notes:
-                <ul>
-                    <li>No frontend move logic (no “CPU trigger”, no turn guessing).</li>
-                    <li>Human moves go to <code>/api/game/move</code>. CPU-vs-CPU animates via <code>/api/game/cpuStep</code>.</li>
-                    <li>If your backend is on a different host/port, adjust <code>API_BASE</code> in the script.</li>
-                </ul>
+            <h2>Network</h2>
+            <div class="netGrid">
+                <div class="netItem">
+                    <div class="netLeft">
+                        <span class="tinyDot" id="apiDot"></span>
+                        <span class="netLabel">API</span>
+                    </div>
+                    <span class="netValue ell" id="apiStatus">checking…</span>
+                </div>
+
+                <div class="netItem">
+                    <div class="netLeft">
+                        <span class="tinyDot" id="sseDot"></span>
+                        <span class="netLabel">SSE</span>
+                    </div>
+                    <span class="netValue ell" id="sseStatus">disconnected</span>
+                </div>
+
+                <div class="netItem">
+                    <div class="netLeft">
+                        <span class="netLabel">Last event</span>
+                    </div>
+                    <span class="netValue" id="lastEvent">—</span>
+                </div>
+
+                <div class="netItem">
+                    <div class="netLeft">
+                        <span class="netLabel">Session</span>
+                    </div>
+                    <span class="netValue ell" id="sidShort">—</span>
+                </div>
             </div>
         </div>
 
-        <!-- RIGHT: Board -->
+        <!-- RIGHT -->
         <div class="card boardWrap">
             <div class="hud">
                 <div class="turn">
                     <span class="pill" id="turnPill">—</span>
-                    <span class="muted" id="turnText">Start a game to play</span>
+                    <span class="turnText muted" id="turnText">Select a mode and start</span>
                 </div>
                 <div class="scores">
                     <div class="scoreBox">
                         <span class="scoreMark x">X</span>
-                        <span class="muted" id="nameX">Player X</span>
+                        <span class="muted name" id="labelX">Player X</span>
                         <span class="scoreNum" id="scoreX">0</span>
                     </div>
                     <div class="scoreBox">
                         <span class="scoreMark o">O</span>
-                        <span class="muted" id="nameO">Player O</span>
+                        <span class="muted name" id="labelO">Player O</span>
                         <span class="scoreNum" id="scoreO">0</span>
                     </div>
                     <div class="scoreBox">
@@ -395,19 +384,18 @@
                 </div>
             </div>
 
-            <div class="board" id="board" aria-label="Tic Tac Toe board">
-                <!-- Cells are created by JS -->
-            </div>
+            <div class="board" id="board" aria-label="Tic Tac Toe board"></div>
 
             <div class="row" style="justify-content:space-between">
-                <div class="tiny">Session: <span class="muted" id="sessionIdText">—</span></div>
-                <div class="tiny">Status: <span class="muted" id="statusText">—</span></div>
+                <div class="pill">Session: <span class="muted" id="sidText">—</span></div>
+                <div class="pill">Status: <span class="muted" id="statusText">—</span></div>
+                <div class="pill">Winner: <span class="muted" id="winnerText">—</span></div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Result overlay -->
+<!-- Overlay -->
 <div class="overlay" id="overlay">
     <div class="modal">
         <div class="modalTop">
@@ -426,54 +414,67 @@
 </div>
 
 <script>
-    // If your backend is same-origin (Spring Boot serving static), keep "".
-    // If backend is elsewhere, set e.g. "http://localhost:8080"
     const API_BASE = "";
 
     const MODE_META = {
-      HH: { badge: "H vs H",  hasX: true,  hasO: true  },
-      HC: { badge: "H vs CPU",hasX: true,  hasO: false },
-      CC: { badge: "CPU vs CPU",hasX: false, hasO: false },
+      HH: { badge: "H vs H",  humans: { X: true,  O: true  }, p1Default: "Player 1", p2Default: "Player 2" },
+      HC: { badge: "H vs CPU",humans: { X: true,  O: false }, p1Default: "Player 1", p2Default: "CPU"      },
+      CC: { badge: "CPU vs CPU",humans:{ X: false, O: false }, p1Default: "CPU X",    p2Default: "CPU O"    },
     };
 
-    // State
     let pendingMode = null;
     let currentMode = null;
     let sessionId = null;
-    let boardLocked = false;
+
+    let sse = null;
+    let boardLocked = true;
+
     let names = { X: "Player X", O: "Player O" };
     let scores = { X: 0, O: 0, D: 0 };
 
-    // DOM
-    const serverDot = document.getElementById("serverDot");
-    const serverText = document.getElementById("serverText");
-    const modeBadge = document.getElementById("modeBadge");
-    const nameFields = document.getElementById("nameFields");
-    const p1NameEl = document.getElementById("p1Name");
-    const p2NameEl = document.getElementById("p2Name");
-    const startBtn = document.getElementById("startBtn");
-    const playAgainBtn = document.getElementById("playAgainBtn");
-    const resetBtn = document.getElementById("resetBtn");
+    const $ = (id) => document.getElementById(id);
 
-    const boardEl = document.getElementById("board");
-    const turnPill = document.getElementById("turnPill");
-    const turnText = document.getElementById("turnText");
-    const nameX = document.getElementById("nameX");
-    const nameO = document.getElementById("nameO");
-    const scoreX = document.getElementById("scoreX");
-    const scoreO = document.getElementById("scoreO");
-    const scoreD = document.getElementById("scoreD");
-    const sessionIdText = document.getElementById("sessionIdText");
-    const statusText = document.getElementById("statusText");
+    const serverDot = $("serverDot");
+    const serverText = $("serverText");
 
-    const overlay = document.getElementById("overlay");
-    const resultTitle = document.getElementById("resultTitle");
-    const resultMsg = document.getElementById("resultMsg");
-    const resultMark = document.getElementById("resultMark");
-    const closeOverlayBtn = document.getElementById("closeOverlayBtn");
-    const overlayPlayAgainBtn = document.getElementById("overlayPlayAgainBtn");
+    const apiDot = $("apiDot");
+    const apiStatus = $("apiStatus");
+    const sseDot = $("sseDot");
+    const sseStatus = $("sseStatus");
+    const lastEvent = $("lastEvent");
+    const sidShort = $("sidShort");
 
-    // Build board cells once
+    const modeGrid = $("modeGrid");
+    const modeBadge = $("modeBadge");
+    const streamBadge = $("streamBadge");
+    const nameFields = $("nameFields");
+
+    const startBtn = $("startBtn");
+    const playAgainBtn = $("playAgainBtn");
+    const resetBtn = $("resetBtn");
+
+    const turnPill = $("turnPill");
+    const turnText = $("turnText");
+
+    const labelX = $("labelX");
+    const labelO = $("labelO");
+    const scoreX = $("scoreX");
+    const scoreO = $("scoreO");
+    const scoreD = $("scoreD");
+
+    const boardEl = $("board");
+    const sidText = $("sidText");
+    const statusText = $("statusText");
+    const winnerText = $("winnerText");
+
+    const overlay = $("overlay");
+    const resultTitle = $("resultTitle");
+    const resultMsg = $("resultMsg");
+    const resultMark = $("resultMark");
+    const closeOverlayBtn = $("closeOverlayBtn");
+    const overlayPlayAgainBtn = $("overlayPlayAgainBtn");
+
+    // board
     const cells = [];
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 3; c++) {
@@ -487,198 +488,275 @@
       }
     }
 
-    // Mode selection
-    document.querySelectorAll(".modeBtn").forEach(btn => {
+    // UI helpers
+    function showOverlay(title, msg, mark, kind) {
+      resultTitle.textContent = title;
+      resultMsg.textContent = msg;
+      resultMark.textContent = mark;
+      resultMark.className = "bigMark " + (kind || "d");
+      overlay.classList.add("show");
+    }
+    function hideOverlay(){ overlay.classList.remove("show"); }
+    closeOverlayBtn.addEventListener("click", hideOverlay);
+    overlayPlayAgainBtn.addEventListener("click", async () => { hideOverlay(); await playAgain(); });
+
+    // API helpers
+    async function apiGet(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+    async function apiPost(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: data.error || `Request failed (${res.status})` };
+      return data;
+    }
+
+    function setApiState(ok, text) {
+      apiDot.className = "tinyDot " + (ok ? "ok" : "bad");
+      apiStatus.textContent = text;
+      serverDot.className = "dot " + (ok ? "ok" : "bad");
+      serverText.textContent = ok ? "✅ Server online" : "❌ Server offline";
+    }
+    function setSseState(stateText, level) {
+      // level: ok | warn | bad
+      const cls = level === "ok" ? "ok" : (level === "bad" ? "bad" : "");
+      sseDot.className = "tinyDot " + cls;
+      sseStatus.textContent = stateText;
+      streamBadge.textContent = "Stream: " + (level === "ok" ? "ON" : (level === "warn" ? "RECONNECTING" : "OFF"));
+    }
+    function stampEvent() {
+      const d = new Date();
+      lastEvent.textContent = d.toLocaleTimeString();
+    }
+    function setSessionDisplay(id) {
+      sidText.textContent = id || "—";
+      sidShort.textContent = id ? id.slice(0, 8) + "…" : "—";
+    }
+
+    async function checkServer() {
+      try {
+        const data = await apiGet("/api/game/health");
+        setApiState(true, data.status || "online");
+      } catch {
+        setApiState(false, "offline");
+      }
+    }
+    checkServer();
+    setSseState("disconnected", "bad");
+
+    // mode selection
+    modeGrid.querySelectorAll(".modeBtn").forEach(btn => {
       btn.addEventListener("click", () => {
-        document.querySelectorAll(".modeBtn").forEach(b => b.classList.remove("selected"));
+        modeGrid.querySelectorAll(".modeBtn").forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         pendingMode = btn.dataset.mode;
+
         const meta = MODE_META[pendingMode];
         modeBadge.textContent = `${meta.badge} (${pendingMode})`;
 
-        // Enable/disable inputs based on mode
-        const showX = meta.hasX;
-        const showO = meta.hasO;
-
-        p1NameEl.disabled = !showX;
-        p2NameEl.disabled = !showO;
-
-        if (!showX) p1NameEl.value = "CPU X";
-        if (!showO) p2NameEl.value = "CPU O";
-
-        if (showX && !p1NameEl.value.trim()) p1NameEl.value = "Player 1";
-        if (showO && !p2NameEl.value.trim()) p2NameEl.value = "Player 2";
+        renderNameInputs(pendingMode);
 
         startBtn.disabled = false;
+        turnText.textContent = "Ready to start";
       });
     });
 
-    closeOverlayBtn.addEventListener("click", () => hideOverlay());
-    overlayPlayAgainBtn.addEventListener("click", async () => {
-      hideOverlay();
-      await playAgain();
-    });
+    function renderNameInputs(mode) {
+      const meta = MODE_META[mode];
+      nameFields.innerHTML = "";
 
+      if (meta.humans.X) nameFields.appendChild(makeNameField("p1Name", "Player X name", meta.p1Default));
+      if (meta.humans.O) nameFields.appendChild(makeNameField("p2Name", "Player O name", meta.p2Default));
+    }
+
+    function makeNameField(id, labelText, defaultValue) {
+      const wrap = document.createElement("div");
+      const label = document.createElement("label");
+      label.htmlFor = id;
+      label.textContent = labelText;
+
+      const input = document.createElement("input");
+      input.id = id;
+      input.type = "text";
+      input.maxLength = 18;
+      input.value = defaultValue;
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !startBtn.disabled) startBtn.click();
+      });
+
+      wrap.appendChild(label);
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    // SSE
+    function closeStream() {
+      if (sse) { try { sse.close(); } catch {} }
+      sse = null;
+      setSseState("disconnected", "bad");
+    }
+
+    function openStream(id) {
+      closeStream();
+      setSseState("connecting…", "warn");
+
+      sse = new EventSource(API_BASE + "/api/game/stream?sessionId=" + encodeURIComponent(id));
+
+      sse.onopen = () => setSseState("connected", "ok");
+
+      sse.addEventListener("state", (evt) => {
+        stampEvent();
+        const state = JSON.parse(evt.data);
+        applyState(state);
+      });
+
+      sse.addEventListener("done", () => {
+        stampEvent();
+        // leave stream status as connected; server may complete emitters.
+      });
+
+      sse.onerror = () => {
+        // browser will retry automatically
+        setSseState("reconnecting…", "warn");
+      };
+    }
+
+    // Start / Play Again / Reset
     startBtn.addEventListener("click", async () => {
       if (!pendingMode) return;
-
-      const meta = MODE_META[pendingMode];
-      const p1 = meta.hasX ? (p1NameEl.value.trim() || "Player 1") : "CPU X";
-      const p2 = meta.hasO ? (p2NameEl.value.trim() || "Player 2") : "CPU O";
-
-      names = {
-        X: meta.hasX ? p1 : "CPU",
-        O: meta.hasO ? p2 : "CPU",
-      };
+      hideOverlay();
 
       currentMode = pendingMode;
-      await startGame(currentMode, p1, p2);
+      const meta = MODE_META[currentMode];
+
+      resetVisualBoard();
+
+      const p1Name = meta.humans.X ? (($("p1Name")?.value || "").trim() || meta.p1Default) : meta.p1Default;
+      const p2Name = meta.humans.O ? (($("p2Name")?.value || "").trim() || meta.p2Default) : meta.p2Default;
+
+      // optimistic labels (backend may override)
+      names.X = meta.humans.X ? p1Name : "CPU";
+      names.O = meta.humans.O ? p2Name : "CPU";
+      updateNameLabels();
+
+      const data = await apiPost("/api/game/start", { mode: currentMode, p1Name, p2Name });
+      if (data.error) return showOverlay("Error", data.error, "!", "d");
+
+      sessionId = data.sessionId;
+      setSessionDisplay(sessionId);
+
+      openStream(sessionId);
+      applyState(data);
+
+      playAgainBtn.disabled = false;
+      resetBtn.disabled = false;
+
+      boardLocked = (currentMode === "CC");
+
+      // CC: trigger backend autoplay once (pushes via SSE)
+      if (currentMode === "CC") {
+        const r = await apiPost("/api/game/autoPlay", { sessionId });
+        if (r.error) showOverlay("Error", r.error, "!", "d");
+      } else {
+        boardLocked = false;
+      }
+
+      // re-check API in case it was down
+      await checkServer();
     });
 
     playAgainBtn.addEventListener("click", playAgain);
+    async function playAgain() {
+      if (!currentMode) return;
+      hideOverlay();
+
+      // easiest: start a new session again
+      startBtn.click();
+    }
 
     resetBtn.addEventListener("click", async () => {
       if (!sessionId) return;
       await apiPost("/api/game/reset", { sessionId }).catch(() => {});
+      closeStream();
+
       sessionId = null;
-      sessionIdText.textContent = "—";
+      setSessionDisplay(null);
+
       statusText.textContent = "—";
-      lockBoard(true);
-      renderBoard(Array(9).fill(""));
-      setTurnUI(null);
+      winnerText.textContent = "—";
+
+      boardLocked = true;
+      resetVisualBoard();
+      setTurnUI(null, null);
+
       playAgainBtn.disabled = true;
       resetBtn.disabled = true;
-      turnText.textContent = "Session reset. Start a new game.";
+      turnText.textContent = "Select a mode and start";
+
+      await checkServer();
     });
 
-    async function checkServer() {
-      serverText.textContent = "Checking server…";
-      serverDot.className = "dot";
-      try {
-        const data = await apiGet("/api/game/health");
-        serverText.textContent = data.status || "✅ Server online";
-        serverDot.className = "dot ok";
-      } catch {
-        serverText.textContent = "❌ Server offline (start Spring Boot)";
-        serverDot.className = "dot bad";
-      }
-    }
-
-    async function startGame(mode, p1Name, p2Name) {
-      hideOverlay();
-      resetVisualBoard();
-      lockBoard(false);
-
-      // update score labels
-      nameX.textContent = names.X;
-      nameO.textContent = names.O;
-
-      // call backend
-      const data = await apiPost("/api/game/start", { mode, p1Name, p2Name });
-      if (data.error) {
-        showOverlay("Error", data.error, "!");
-        return;
-      }
-
-      sessionId = data.sessionId;
-      sessionIdText.textContent = sessionId;
-      playAgainBtn.disabled = false;
-      resetBtn.disabled = false;
-
-      applyServerState(data);
-
-      // CC loop
-      if (mode === "CC") {
-        await runCpuVsCpuLoop();
-      }
-    }
-
-    async function playAgain() {
-      if (!currentMode) return;
-
-      // keep same mode + names
-      const meta = MODE_META[currentMode];
-      const p1 = meta.hasX ? (p1NameEl.value.trim() || "Player 1") : "CPU X";
-      const p2 = meta.hasO ? (p2NameEl.value.trim() || "Player 2") : "CPU O";
-
-      await startGame(currentMode, p1, p2);
-    }
-
-    function resetVisualBoard() {
-      cells.forEach(c => {
-        c.className = "cell";
-        c.textContent = "";
-      });
-      statusText.textContent = "—";
-    }
-
-    function lockBoard(lock) {
-      boardLocked = lock;
-    }
-
-    async function onCellClick(row, col) {
-      if (boardLocked) return;
-      if (!sessionId) return;
-
-      // CC has no human clicks
+    // Human move (HH/HC only)
+    async function onCellClick(r, c) {
+      if (!sessionId || boardLocked) return;
       if (currentMode === "CC") return;
 
-      const idx = row * 3 + col;
+      const idx = r * 3 + c;
       if (cells[idx].classList.contains("taken")) return;
 
-      lockBoard(true);
+      const res = await apiPost("/api/game/move", { sessionId, row: r, col: c });
+      if (res.error) return;
 
-      const data = await apiPost("/api/game/move", { sessionId, row, col });
-      if (data.error) {
-        // e.g. not human turn, invalid move
-        lockBoard(false);
-        return;
-      }
-
-      applyServerState(data);
-
-      if (data.status !== "ongoing") {
-        lockBoard(true);
-        handleGameOver(data);
-        return;
-      }
-
-      // HC: backend auto-played CPU if needed. No extra frontend work.
-      lockBoard(false);
+      // apply immediately; SSE will also push
+      applyState(res);
+      await checkServer();
     }
 
-    async function runCpuVsCpuLoop() {
-      lockBoard(true);
-
-      while (true) {
-        await sleep(450);
-
-        const data = await apiPost("/api/game/cpuStep", { sessionId });
-        if (data.error) {
-          lockBoard(false);
-          return;
-        }
-
-        applyServerState(data);
-
-        if (data.status !== "ongoing") {
-          lockBoard(true);
-          handleGameOver(data);
-          return;
-        }
-      }
+    // Render / state
+    function resetVisualBoard() {
+      cells.forEach(cell => {
+        cell.className = "cell";
+        cell.textContent = "";
+      });
+      statusText.textContent = "—";
+      winnerText.textContent = "—";
+      turnPill.textContent = "—";
     }
 
-    function applyServerState(state) {
-      renderBoard(state.board);
-      setTurnUI(state.currentPlayer);
-      statusText.textContent = state.status || "—";
+    function updateNameLabels() {
+      labelX.textContent = (names.X || "Player X").toUpperCase();
+      labelO.textContent = (names.O || "Player O").toUpperCase();
+    }
 
-      // Backend returns names too; use them if present
+    function applyState(state) {
+      if (!state) return;
+
+      // use backend names (fixes cosmetic mismatch)
       if (state.p1Name) names.X = state.p1Name;
       if (state.p2Name) names.O = state.p2Name;
-      nameX.textContent = names.X;
-      nameO.textContent = names.O;
+      updateNameLabels();
+
+      // board
+      renderBoard(state.board);
+
+      // status
+      statusText.textContent = state.status || "—";
+      winnerText.textContent = state.winner || "—";
+
+      // turn
+      setTurnUI(state.currentPlayer, state.status);
+
+      // lock & overlay
+      if (state.status && state.status !== "ongoing") {
+        boardLocked = true;
+        handleGameOver(state);
+      }
     }
 
     function renderBoard(board) {
@@ -688,7 +766,6 @@
         const cell = cells[i];
         cell.className = "cell";
         cell.textContent = "";
-
         if (!v) continue;
 
         cell.textContent = v;
@@ -698,83 +775,43 @@
       }
     }
 
-    function setTurnUI(mark) {
+    function setTurnUI(mark, status) {
       const m = (mark || "").toString().trim().toUpperCase();
-      if (m !== "X" && m !== "O") {
+      if (!m || (m !== "X" && m !== "O")) {
         turnPill.textContent = "—";
         turnPill.className = "pill";
-        turnText.textContent = "Start a game to play";
+        if (status && status !== "ongoing") turnText.textContent = "Game finished";
         return;
       }
 
+      const who = (m === "X") ? names.X : names.O;
       turnPill.textContent = m;
       turnPill.className = "pill " + (m === "X" ? "x" : "o");
-      const who = (m === "X") ? names.X : names.O;
       turnText.textContent = `${who}'s turn`;
     }
 
     function handleGameOver(state) {
       const status = (state.status || "").toLowerCase();
-      const winner = state.winner || null;
+      const winnerName = state.winner || null;
 
-      if (status === "draw" || !winner) {
+      if (status === "draw" || !winnerName) {
         scores.D++;
         scoreD.textContent = String(scores.D);
         showOverlay("Draw", "No winner this round.", "—", "d");
         return;
       }
 
-      // winner is a NAME (per backend patch)
-      const xWin = (winner === names.X);
+      const xWin = (winnerName === names.X);
       if (xWin) {
         scores.X++;
         scoreX.textContent = String(scores.X);
-        showOverlay("Game over", `${winner} wins.`, "X", "x");
+        showOverlay("Game Over", `${winnerName} wins.`, "X", "x");
       } else {
         scores.O++;
         scoreO.textContent = String(scores.O);
-        showOverlay("Game over", `${winner} wins.`, "O", "o");
+        showOverlay("Game Over", `${winnerName} wins.`, "O", "o");
       }
     }
-
-    function showOverlay(title, msg, mark, kind) {
-      resultTitle.textContent = title;
-      resultMsg.textContent = msg;
-
-      resultMark.textContent = mark;
-      resultMark.className = "bigMark " + (kind || "d");
-
-      overlay.classList.add("show");
-    }
-
-    function hideOverlay() {
-      overlay.classList.remove("show");
-    }
-
-    function sleep(ms) {
-      return new Promise(r => setTimeout(r, ms));
-    }
-
-    async function apiGet(path) {
-      const res = await fetch(API_BASE + path);
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    }
-
-    async function apiPost(path, body) {
-      const res = await fetch(API_BASE + path, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) return { error: data.error || `Request failed (${res.status})` };
-      return data;
-    }
-
-    // init
-    checkServer();
 </script>
 </body>
 </html>

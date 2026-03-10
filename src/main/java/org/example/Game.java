@@ -13,6 +13,14 @@ public class Game {
         this.currentPlayer = Mark.X;
     }
 
+    public Player getPlayerOne() { return playerOne; }
+    public Player getPlayerTwo() { return playerTwo; }
+    public Mark getCurrentPlayer() { return currentPlayer; }
+
+    public Player getCurrentPlayerObj() {
+        return (currentPlayer == Mark.X) ? playerOne : playerTwo;
+    }
+
     public String[] getBoardState() {
         Mark[][] f = board.getField();
         String[] flat = new String[9];
@@ -23,22 +31,6 @@ public class Game {
             }
         }
         return flat;
-    }
-
-    public Player getPlayerOne() {
-        return playerOne;
-    }
-
-    public Player getPlayerTwo() {
-        return playerTwo;
-    }
-
-    public Mark getCurrentPlayer() {
-        return currentPlayer;
-    }
-
-    public Player getCurrentPlayerObj() {
-        return (currentPlayer == Mark.X) ? playerOne : playerTwo;
     }
 
     public String getGameStatus() {
@@ -53,11 +45,7 @@ public class Game {
         return (w == Mark.X) ? playerOne.getNamePlayer() : playerTwo.getNamePlayer();
     }
 
-    /**
-     * Human move endpoint.
-     * - Only valid if it's currently a HumanPlayer turn.
-     * - After a human move, if next is CPU and game is still ongoing, CPU auto-plays exactly ONE move.
-     */
+    /** Human move only. If next player is CPU (HC), CPU auto-plays exactly one move. */
     public boolean applyHumanMove(int row, int col) {
         if (board.isGameOver()) return false;
 
@@ -69,16 +57,12 @@ public class Game {
         Mark[][] f = board.getField();
         if (f[row][col] != Mark.EMPTY) return false;
 
-        // place
         f[row][col] = currentPlayer;
 
-        // if game ends, stop
         if (board.isGameOver()) return true;
 
-        // switch to next
         switchTurn();
 
-        // auto CPU once (for HC)
         Player next = getCurrentPlayerObj();
         if (next instanceof ComputerPlayer && !board.isGameOver()) {
             next.doMove(f);
@@ -86,15 +70,10 @@ public class Game {
                 switchTurn();
             }
         }
-
         return true;
     }
 
-    /**
-     * CPU step endpoint (for CC mode animation).
-     * - Only valid if it's currently a ComputerPlayer turn.
-     * - Plays exactly ONE computer move.
-     */
+    /** CPU step (one move) used for autoplay CC. */
     public boolean cpuStep() {
         if (board.isGameOver()) return false;
 
