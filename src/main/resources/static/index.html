@@ -1,823 +1,780 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Tic-Tac-Toe</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet"/>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Tic Tac Toe (Backend-driven)</title>
     <style>
-        :root {
-          --bg: #0a0a0f;
-          --surface: #12121a;
-          --panel: #1a1a26;
-          --accent-x: #ff3c5f;
-          --accent-o: #00e5ff;
-          --grid-line: #2a2a3a;
-          --text: #e0e0f0;
-          --muted: #555570;
-          --win-glow-x: 0 0 30px #ff3c5f88;
-          --win-glow-o: 0 0 30px #00e5ff88;
+        :root{
+          --bg:#0b0f19;
+          --card:#121a2a;
+          --card2:#0f1626;
+          --text:#e8edf7;
+          --muted:#98a3b8;
+          --x:#6ee7ff;
+          --o:#ff8bd3;
+          --ok:#36d399;
+          --bad:#f87272;
+          --warn:#fbbf24;
+          --border:rgba(255,255,255,.10);
+          --shadow: 0 10px 30px rgba(0,0,0,.35);
+          --radius:18px;
+        }
+        *{box-sizing:border-box}
+        html,body{height:100%}
+        body{
+          margin:0;
+          font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+          background: radial-gradient(1000px 500px at 20% 0%, rgba(110,231,255,.12), transparent 55%),
+                      radial-gradient(900px 500px at 80% 10%, rgba(255,139,211,.10), transparent 55%),
+                      radial-gradient(900px 700px at 50% 100%, rgba(54,211,153,.08), transparent 60%),
+                      var(--bg);
+          color:var(--text);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          padding:22px;
+        }
+        .app{
+          width:min(980px, 100%);
+          display:grid;
+          gap:16px;
+          grid-template-columns: 1fr;
+        }
+        .topbar{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding:14px 16px;
+          background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+          border:1px solid var(--border);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow);
+        }
+        .brand{
+          display:flex; align-items:center; gap:12px;
+        }
+        .logo{
+          width:40px;height:40px;border-radius:14px;
+          background:
+            radial-gradient(18px 18px at 30% 30%, rgba(110,231,255,.8), transparent 60%),
+            radial-gradient(18px 18px at 70% 70%, rgba(255,139,211,.75), transparent 60%),
+            rgba(255,255,255,.06);
+          border:1px solid var(--border);
+        }
+        .brand h1{font-size:16px; margin:0; letter-spacing:.2px}
+        .brand p{margin:2px 0 0; font-size:12px; color:var(--muted)}
+        .status{
+          display:flex; align-items:center; gap:8px;
+          font-size:12px; color:var(--muted);
+          padding:8px 10px;
+          border-radius:999px;
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.04);
+          white-space:nowrap;
+        }
+        .dot{
+          width:8px; height:8px; border-radius:50%;
+          background: var(--warn);
+          box-shadow: 0 0 0 4px rgba(251,191,36,.12);
+        }
+        .dot.ok{ background: var(--ok); box-shadow:0 0 0 4px rgba(54,211,153,.12);}
+        .dot.bad{ background: var(--bad); box-shadow:0 0 0 4px rgba(248,114,114,.12);}
+
+        .grid{
+          display:grid;
+          grid-template-columns: 360px 1fr;
+          gap:16px;
+        }
+        @media (max-width: 880px){
+          .grid{ grid-template-columns: 1fr; }
         }
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        .card{
+          background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.03));
+          border:1px solid var(--border);
+          border-radius: var(--radius);
+          box-shadow: var(--shadow);
+          padding:16px;
+        }
+        .card h2{
+          margin:0 0 10px;
+          font-size:14px;
+          letter-spacing:.3px;
+          color: rgba(232,237,247,.92);
+        }
+        .muted{color:var(--muted)}
+        .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+        .row + .row{margin-top:10px}
 
-        body {
-          background: var(--bg);
-          color: var(--text);
-          font-family: 'Space Mono', monospace;
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          overflow: hidden;
-          position: relative;
+        .modes{
+          display:grid;
+          grid-template-columns: 1fr;
+          gap:10px;
+        }
+        .modeBtn{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          padding:12px 12px;
+          border-radius: 14px;
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.04);
+          color:var(--text);
+          cursor:pointer;
+          transition: transform .08s ease, background .12s ease, border-color .12s ease;
+        }
+        .modeBtn:hover{ transform: translateY(-1px); background: rgba(255,255,255,.06);}
+        .modeBtn.selected{ border-color: rgba(110,231,255,.45); background: rgba(110,231,255,.08); }
+        .modeLeft{display:flex; flex-direction:column; gap:2px}
+        .modeTitle{font-weight:700; font-size:13px}
+        .modeDesc{font-size:12px; color:var(--muted)}
+        .badge{
+          font-size:11px; color: rgba(232,237,247,.85);
+          border:1px solid var(--border);
+          padding:6px 10px;
+          border-radius:999px;
+          background: rgba(255,255,255,.04);
+          white-space:nowrap;
         }
 
-        body::before {
-          content: '';
-          position: fixed;
-          inset: 0;
-          background-image:
-            linear-gradient(var(--grid-line) 1px, transparent 1px),
-            linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-          background-size: 48px 48px;
-          opacity: 0.3;
-          animation: gridDrift 20s linear infinite;
-          pointer-events: none;
+        .fields{display:grid; gap:10px; margin-top:10px}
+        label{font-size:12px; color:var(--muted)}
+        input{
+          width:100%;
+          padding:10px 12px;
+          border-radius: 12px;
+          border:1px solid var(--border);
+          background: rgba(0,0,0,.18);
+          color:var(--text);
+          outline:none;
         }
-
-        @keyframes gridDrift {
-          0% { background-position: 0 0; }
-          100% { background-position: 48px 48px; }
+        input:focus{ border-color: rgba(110,231,255,.5); box-shadow: 0 0 0 4px rgba(110,231,255,.10); }
+        .btnRow{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap}
+        button{
+          padding:10px 12px;
+          border-radius: 12px;
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.05);
+          color:var(--text);
+          cursor:pointer;
+          font-weight:600;
+          transition: transform .08s ease, background .12s ease, border-color .12s ease;
         }
+        button:hover{ transform: translateY(-1px); background: rgba(255,255,255,.07); }
+        button.primary{ border-color: rgba(54,211,153,.55); background: rgba(54,211,153,.12);}
+        button.danger{ border-color: rgba(248,114,114,.55); background: rgba(248,114,114,.10);}
+        button:disabled{opacity:.55; cursor:not-allowed; transform:none}
 
-        .orb {
-          position: fixed;
-          border-radius: 50%;
-          filter: blur(80px);
-          pointer-events: none;
-          opacity: 0.12;
-          animation: orbFloat 8s ease-in-out infinite;
+        .boardWrap{
+          display:grid;
+          gap:12px;
         }
-        .orb-1 { width: 400px; height: 400px; background: var(--accent-x); top: -100px; left: -100px; animation-delay: 0s; }
-        .orb-2 { width: 350px; height: 350px; background: var(--accent-o); bottom: -80px; right: -80px; animation-delay: -4s; }
-
-        @keyframes orbFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(30px, 20px) scale(1.1); }
+        .hud{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:10px;
+          flex-wrap:wrap;
+          padding:10px 12px;
+          border-radius: 14px;
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.04);
         }
-
-        .wrapper {
-          position: relative;
-          z-index: 10;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 0;
-          animation: wrapIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        .turn{
+          display:flex; align-items:center; gap:10px;
+          font-size:13px;
         }
-
-        @keyframes wrapIn {
-          from { opacity: 0; transform: translateY(40px); }
-          to { opacity: 1; transform: translateY(0); }
+        .pill{
+          padding:6px 10px;
+          border-radius:999px;
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.04);
+          font-size:12px;
+          color: rgba(232,237,247,.92);
+          white-space:nowrap;
         }
+        .pill.x{ border-color: rgba(110,231,255,.45); background: rgba(110,231,255,.10); }
+        .pill.o{ border-color: rgba(255,139,211,.45); background: rgba(255,139,211,.10); }
 
-        .screen { display: none; flex-direction: column; align-items: center; }
-        .screen.active { display: flex; }
-
-        .title {
-          font-family: 'Bebas Neue', cursive;
-          font-size: clamp(52px, 10vw, 88px);
-          letter-spacing: 6px;
-          line-height: 1;
-          text-align: center;
-          margin-bottom: 6px;
-          background: linear-gradient(135deg, var(--accent-x), var(--accent-o));
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          filter: drop-shadow(0 0 30px #ff3c5f44);
+        .scores{
+          display:flex; gap:10px; align-items:center; flex-wrap:wrap;
+          font-size:12px; color:var(--muted);
         }
-
-        .subtitle {
-          font-size: 11px;
-          letter-spacing: 5px;
-          color: var(--muted);
-          text-transform: uppercase;
-          margin-bottom: 48px;
+        .scoreBox{
+          display:flex; align-items:center; gap:8px;
+          padding:6px 10px;
+          border-radius:999px;
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.04);
         }
+        .scoreMark{font-weight:800}
+        .scoreMark.x{color:var(--x)}
+        .scoreMark.o{color:var(--o)}
+        .scoreNum{color:rgba(232,237,247,.92); font-weight:700}
 
-        .menu-options {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-          width: 300px;
-        }
-
-        .menu-btn {
-          background: var(--panel);
-          border: 1px solid var(--grid-line);
-          color: var(--text);
-          font-family: 'Space Mono', monospace;
-          font-size: 13px;
-          letter-spacing: 2px;
-          padding: 16px 24px;
-          cursor: pointer;
-          position: relative;
-          overflow: hidden;
-          transition: border-color 0.3s, transform 0.15s;
-          text-transform: uppercase;
-        }
-
-        .menu-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, var(--accent-x), var(--accent-o));
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-
-        .menu-btn:hover { border-color: var(--accent-x); transform: translateX(4px); }
-        .menu-btn:hover::before { opacity: 0.08; }
-        .menu-btn:active { transform: translateX(2px) scale(0.99); }
-        .menu-btn span { position: relative; z-index: 1; }
-        .menu-num { color: var(--accent-x); margin-right: 12px; font-size: 10px; }
-
-        .game-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          width: 380px;
-          margin-bottom: 24px;
-        }
-
-        .player-card {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 6px;
-          padding: 12px 18px;
-          border: 1px solid var(--grid-line);
-          background: var(--panel);
-          min-width: 110px;
-          transition: border-color 0.3s, box-shadow 0.3s;
-          position: relative;
-        }
-
-        .player-card.active-x { border-color: var(--accent-x); box-shadow: var(--win-glow-x); }
-        .player-card.active-o { border-color: var(--accent-o); box-shadow: var(--win-glow-o); }
-        .player-card .p-mark { font-family: 'Bebas Neue', cursive; font-size: 32px; line-height: 1; }
-        .player-card.x-card .p-mark { color: var(--accent-x); }
-        .player-card.o-card .p-mark { color: var(--accent-o); }
-
-        .player-card .p-name {
-          font-size: 10px;
-          letter-spacing: 2px;
-          color: var(--muted);
-          text-transform: uppercase;
-          max-width: 90px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .player-card .p-type { font-size: 9px; letter-spacing: 1px; color: var(--muted); opacity: 0.6; }
-        .vs-label { font-family: 'Bebas Neue', cursive; font-size: 24px; color: var(--muted); letter-spacing: 3px; }
-
-        .score-row { display: flex; gap: 32px; margin-bottom: 20px; align-items: center; }
-        .score-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-        .score-label { font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
-        .score-val { font-family: 'Bebas Neue', cursive; font-size: 28px; line-height: 1; }
-        .score-val.x-score { color: var(--accent-x); }
-        .score-val.o-score { color: var(--accent-o); }
-        .score-val.d-score { color: var(--muted); }
-
-        .board-container { position: relative; width: 360px; height: 360px; margin-bottom: 20px; }
-
-        .board {
-          display: grid;
+        .board{
+          aspect-ratio: 1 / 1;
+          width: min(520px, 100%);
+          margin-inline:auto;
+          display:grid;
           grid-template-columns: repeat(3, 1fr);
-          grid-template-rows: repeat(3, 1fr);
-          width: 100%;
-          height: 100%;
-          gap: 3px;
-          background: var(--grid-line);
-          border: 1px solid var(--grid-line);
+          gap:10px;
+          padding:10px;
+          border-radius: var(--radius);
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.03);
+          position:relative;
         }
-
-        .cell {
-          background: var(--surface);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          font-family: 'Bebas Neue', cursive;
-          font-size: 80px;
-          line-height: 1;
-          transition: background 0.15s, transform 0.1s;
-          position: relative;
-          overflow: hidden;
-          user-select: none;
+        .cell{
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          font-size:48px;
+          font-weight:900;
+          border-radius: 16px;
+          border:1px solid var(--border);
+          background: rgba(0,0,0,.18);
+          cursor:pointer;
+          user-select:none;
+          transition: transform .08s ease, background .12s ease, border-color .12s ease;
         }
+        .cell:hover{ transform: translateY(-1px); background: rgba(255,255,255,.05); }
+        .cell.taken{ cursor:not-allowed; }
+        .cell.x{ color: var(--x); border-color: rgba(110,231,255,.35); background: rgba(110,231,255,.06); }
+        .cell.o{ color: var(--o); border-color: rgba(255,139,211,.35); background: rgba(255,139,211,.06); }
 
-        .cell::before { content: ''; position: absolute; inset: 0; opacity: 0; transition: opacity 0.2s; }
-        .cell:not(.taken):not(.locked):hover { background: var(--panel); transform: scale(0.97); }
-        .cell.locked { cursor: not-allowed; opacity: 0.7; }
-        .cell.x-cell { color: var(--accent-x); animation: cellPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        .cell.o-cell { color: var(--accent-o); animation: cellPop 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-        .cell.win-cell { animation: winPulse 0.5s ease both; }
-
-        @keyframes cellPop {
-          from { transform: scale(0.3); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
+        .overlay{
+          position:fixed;
+          inset:0;
+          display:none;
+          align-items:center;
+          justify-content:center;
+          background: rgba(0,0,0,.55);
+          backdrop-filter: blur(6px);
+          padding:22px;
         }
-
-        @keyframes winPulse {
-          0% { transform: scale(1); }
-          40% { transform: scale(1.08); }
-          100% { transform: scale(1); }
+        .overlay.show{ display:flex; }
+        .modal{
+          width:min(520px, 100%);
+          border-radius: 22px;
+          border:1px solid var(--border);
+          background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+          box-shadow: 0 20px 60px rgba(0,0,0,.5);
+          padding:18px;
         }
-
-        .cell.win-x { background: #ff3c5f18; box-shadow: inset 0 0 30px #ff3c5f33; }
-        .cell.win-o { background: #00e5ff18; box-shadow: inset 0 0 30px #00e5ff33; }
-
-        .status-bar {
-          height: 44px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 13px;
-          letter-spacing: 3px;
-          text-transform: uppercase;
-          color: var(--muted);
-          transition: color 0.3s;
-          margin-bottom: 16px;
-          text-align: center;
+        .modalTop{display:flex; justify-content:space-between; gap:10px; align-items:center}
+        .modal h3{margin:0; font-size:16px}
+        .modal p{margin:6px 0 0; color:var(--muted); font-size:13px}
+        .bigMark{
+          width:56px; height:56px;
+          border-radius: 18px;
+          display:flex; align-items:center; justify-content:center;
+          font-size:28px; font-weight:1000;
+          border:1px solid var(--border);
+          background: rgba(255,255,255,.05);
         }
+        .bigMark.x{ color:var(--x); border-color: rgba(110,231,255,.35); background: rgba(110,231,255,.08); }
+        .bigMark.o{ color:var(--o); border-color: rgba(255,139,211,.35); background: rgba(255,139,211,.08); }
+        .bigMark.d{ color: rgba(232,237,247,.85); }
 
-        .status-bar.win-x { color: var(--accent-x); text-shadow: var(--win-glow-x); }
-        .status-bar.win-o { color: var(--accent-o); text-shadow: var(--win-glow-o); }
-        .status-bar.draw { color: var(--text); }
-        .status-bar.error { color: #ffaa00; }
-
-        .action-row { display: flex; gap: 10px; }
-
-        .action-btn {
-          background: transparent;
-          border: 1px solid var(--grid-line);
-          color: var(--muted);
-          font-family: 'Space Mono', monospace;
-          font-size: 10px;
-          letter-spacing: 2px;
-          padding: 10px 18px;
-          cursor: pointer;
-          text-transform: uppercase;
-          transition: border-color 0.2s, color 0.2s;
-        }
-
-        .action-btn:hover { border-color: var(--text); color: var(--text); }
-        .action-btn.primary { border-color: var(--accent-x); color: var(--accent-x); }
-        .action-btn.primary:hover { background: var(--accent-x); color: var(--bg); }
-        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
-
-        .setup-title {
-          font-family: 'Bebas Neue', cursive;
-          font-size: 36px;
-          letter-spacing: 4px;
-          margin-bottom: 32px;
-          color: var(--accent-o);
-        }
-
-        .setup-form { display: flex; flex-direction: column; gap: 16px; width: 300px; }
-        .form-group { display: flex; flex-direction: column; gap: 6px; }
-        .form-label { font-size: 9px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; }
-
-        .form-input {
-          background: var(--panel);
-          border: 1px solid var(--grid-line);
-          color: var(--text);
-          font-family: 'Space Mono', monospace;
-          font-size: 13px;
-          padding: 12px 14px;
-          outline: none;
-          transition: border-color 0.2s;
-          letter-spacing: 1px;
-        }
-
-        .form-input:focus { border-color: var(--accent-o); }
-
-        .form-btn {
-          background: linear-gradient(135deg, var(--accent-x), var(--accent-o));
-          border: none;
-          color: var(--bg);
-          font-family: 'Space Mono', monospace;
-          font-size: 12px;
-          letter-spacing: 3px;
-          padding: 14px;
-          cursor: pointer;
-          text-transform: uppercase;
-          font-weight: 700;
-          margin-top: 8px;
-          transition: opacity 0.2s, transform 0.15s;
-        }
-
-        .form-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-        .form-btn:active { transform: translateY(0); }
-
-        .back-link {
-          margin-top: 16px;
-          font-size: 10px;
-          letter-spacing: 2px;
-          color: var(--muted);
-          cursor: pointer;
-          text-transform: uppercase;
-          text-decoration: underline;
-          transition: color 0.2s;
-        }
-        .back-link:hover { color: var(--text); }
-
-        .thinking {
-          display: none;
-          position: absolute;
-          inset: 0;
-          background: rgba(10, 10, 15, 0.6);
-          align-items: center;
-          justify-content: center;
-          z-index: 20;
-          backdrop-filter: blur(2px);
-        }
-        .thinking.visible { display: flex; }
-
-        .thinking-text {
-          font-size: 11px;
-          letter-spacing: 4px;
-          color: var(--accent-o);
-          text-transform: uppercase;
-          animation: blink 1s step-end infinite;
-        }
-
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-
-        /* API config badge */
-        .api-badge {
-          position: fixed;
-          bottom: 18px;
-          right: 18px;
-          font-size: 9px;
-          letter-spacing: 2px;
-          color: var(--muted);
-          border: 1px solid var(--grid-line);
-          padding: 6px 10px;
-          background: var(--panel);
-          z-index: 100;
-          text-transform: uppercase;
-        }
-        .api-badge span { color: var(--accent-o); }
+        .tiny{font-size:11px; color:var(--muted)}
+        .hidden{display:none}
+        .sep{height:1px; background: var(--border); margin:14px 0}
     </style>
 </head>
+
 <body>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
-
-<div class="api-badge">API: <span id="api-base-display">localhost:8080</span></div>
-
-<div class="wrapper">
-
-    <!-- ── MENU ── -->
-    <div class="screen active" id="screen-menu">
-        <div class="title">TIC<br/>TAC<br/>TOE</div>
-        <div class="subtitle">Select Game Mode</div>
-        <div class="menu-options">
-            <button class="menu-btn" onclick="startSetup('HVH')">
-                <span><span class="menu-num">01.</span> Human vs Human</span>
-            </button>
-            <button class="menu-btn" onclick="startSetup('HVC')">
-                <span><span class="menu-num">02.</span> Human vs Computer</span>
-            </button>
-            <button class="menu-btn" onclick="startSetup('CVC')">
-                <span><span class="menu-num">03.</span> Computer vs Computer</span>
-            </button>
+<div class="app">
+    <div class="topbar">
+        <div class="brand">
+            <div class="logo" aria-hidden="true"></div>
+            <div>
+                <h1>Tic Tac Toe</h1>
+                <p>Frontend is UI only. All game logic is on the Java backend.</p>
+            </div>
+        </div>
+        <div class="status" id="serverStatus">
+            <span class="dot" id="serverDot"></span>
+            <span id="serverText">Checking server…</span>
         </div>
     </div>
 
-    <!-- ── SETUP ── -->
-    <div class="screen" id="screen-setup">
-        <div class="setup-title">Player Setup</div>
-        <div class="setup-form" id="setup-form"></div>
-        <div class="back-link" onclick="showScreen('screen-menu')">← Back to menu</div>
+    <div class="grid">
+        <!-- LEFT: Setup / Controls -->
+        <div class="card">
+            <h2>Game Setup</h2>
+
+            <div class="modes" id="modeGrid">
+                <button class="modeBtn" data-mode="HH" type="button">
+                    <div class="modeLeft">
+                        <div class="modeTitle">Human vs Human</div>
+                        <div class="modeDesc">Two players on the same device</div>
+                    </div>
+                    <span class="badge">HH</span>
+                </button>
+
+                <button class="modeBtn" data-mode="HC" type="button">
+                    <div class="modeLeft">
+                        <div class="modeTitle">Human vs CPU</div>
+                        <div class="modeDesc">Backend auto-plays CPU moves</div>
+                    </div>
+                    <span class="badge">HC</span>
+                </button>
+
+                <button class="modeBtn" data-mode="CC" type="button">
+                    <div class="modeLeft">
+                        <div class="modeTitle">CPU vs CPU</div>
+                        <div class="modeDesc">Animated using /api/game/cpuStep</div>
+                    </div>
+                    <span class="badge">CC</span>
+                </button>
+            </div>
+
+            <div class="sep"></div>
+
+            <div class="row" style="justify-content:space-between">
+                <div class="pill" id="modeBadge">No mode selected</div>
+                <div class="tiny">API: <span class="muted">/api/game/start</span> · <span class="muted">/move</span> · <span class="muted">/cpuStep</span></div>
+            </div>
+
+            <div class="fields" id="nameFields">
+                <div>
+                    <label for="p1Name">Player X name</label>
+                    <input id="p1Name" placeholder="e.g. Alice" maxlength="18" />
+                </div>
+                <div>
+                    <label for="p2Name">Player O name</label>
+                    <input id="p2Name" placeholder="e.g. Bob" maxlength="18" />
+                </div>
+                <div class="tiny">In <b>HC</b>, Player O is CPU. In <b>CC</b>, both are CPU.</div>
+            </div>
+
+            <div class="btnRow">
+                <button class="primary" id="startBtn" type="button" disabled>Start game</button>
+                <button id="playAgainBtn" type="button" disabled>Play again</button>
+                <button class="danger" id="resetBtn" type="button" disabled>Reset session</button>
+            </div>
+
+            <div class="sep"></div>
+
+            <div class="tiny">
+                Notes:
+                <ul>
+                    <li>No frontend move logic (no “CPU trigger”, no turn guessing).</li>
+                    <li>Human moves go to <code>/api/game/move</code>. CPU-vs-CPU animates via <code>/api/game/cpuStep</code>.</li>
+                    <li>If your backend is on a different host/port, adjust <code>API_BASE</code> in the script.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- RIGHT: Board -->
+        <div class="card boardWrap">
+            <div class="hud">
+                <div class="turn">
+                    <span class="pill" id="turnPill">—</span>
+                    <span class="muted" id="turnText">Start a game to play</span>
+                </div>
+                <div class="scores">
+                    <div class="scoreBox">
+                        <span class="scoreMark x">X</span>
+                        <span class="muted" id="nameX">Player X</span>
+                        <span class="scoreNum" id="scoreX">0</span>
+                    </div>
+                    <div class="scoreBox">
+                        <span class="scoreMark o">O</span>
+                        <span class="muted" id="nameO">Player O</span>
+                        <span class="scoreNum" id="scoreO">0</span>
+                    </div>
+                    <div class="scoreBox">
+                        <span class="muted">Draws</span>
+                        <span class="scoreNum" id="scoreD">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="board" id="board" aria-label="Tic Tac Toe board">
+                <!-- Cells are created by JS -->
+            </div>
+
+            <div class="row" style="justify-content:space-between">
+                <div class="tiny">Session: <span class="muted" id="sessionIdText">—</span></div>
+                <div class="tiny">Status: <span class="muted" id="statusText">—</span></div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <!-- ── GAME ── -->
-    <div class="screen" id="screen-game">
-        <div class="game-header">
-            <div class="player-card x-card" id="card-x">
-                <div class="p-mark">X</div>
-                <div class="p-name" id="name-x">Player 1</div>
-                <div class="p-type" id="type-x">Human</div>
+<!-- Result overlay -->
+<div class="overlay" id="overlay">
+    <div class="modal">
+        <div class="modalTop">
+            <div>
+                <h3 id="resultTitle">Game Over</h3>
+                <p id="resultMsg">—</p>
             </div>
-            <div class="vs-label">VS</div>
-            <div class="player-card o-card" id="card-o">
-                <div class="p-mark">O</div>
-                <div class="p-name" id="name-o">Player 2</div>
-                <div class="p-type" id="type-o">Human</div>
-            </div>
+            <div class="bigMark d" id="resultMark">—</div>
         </div>
-
-        <div class="score-row">
-            <div class="score-item">
-                <div class="score-val x-score" id="score-x">0</div>
-                <div class="score-label">X wins</div>
-            </div>
-            <div class="score-item">
-                <div class="score-val d-score" id="score-d">0</div>
-                <div class="score-label">Draws</div>
-            </div>
-            <div class="score-item">
-                <div class="score-val o-score" id="score-o">0</div>
-                <div class="score-label">O wins</div>
-            </div>
-        </div>
-
-        <div class="board-container">
-            <div class="board" id="board"></div>
-            <div class="thinking" id="thinking">
-                <div class="thinking-text">Thinking...</div>
-            </div>
-        </div>
-
-        <div class="status-bar" id="status">Connecting...</div>
-
-        <div class="action-row">
-            <button class="action-btn primary" id="btn-new-game" onclick="resetGame()">New Game</button>
-            <button class="action-btn" onclick="goToMenu()">Menu</button>
+        <div class="sep"></div>
+        <div class="btnRow" style="justify-content:flex-end">
+            <button id="closeOverlayBtn" type="button">Close</button>
+            <button class="primary" id="overlayPlayAgainBtn" type="button">Play again</button>
         </div>
     </div>
 </div>
 
 <script>
-    // ═══════════════════════════════════════════════════════════
-    //  ██████╗ ██████╗ ███╗   ██╗███████╗██╗ ██████╗
-    // ██╔════╝██╔═══██╗████╗  ██║██╔════╝██║██╔════╝
-    // ██║     ██║   ██║██╔██╗ ██║█████╗  ██║██║  ███╗
-    // ██║     ██║   ██║██║╚██╗██║██╔══╝  ██║██║   ██║
-    // ╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝
-    //  ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝
-    // ═══════════════════════════════════════════════════════════
-    //
-    //  ── CONFIGURE YOUR JAVA API BASE URL HERE ──────────────
-    const API_BASE = 'http://localhost:8080/api';
-    //  ───────────────────────────────────────────────────────
-    //
-    //  EXPECTED JAVA REST API CONTRACT:
-    //
-    //  POST   /api/game/start
-    //    Request:  { mode: "HVH"|"HVC"|"CVC", playerXName: string, playerOName: string }
-    //    Response: GameState (see below)
-    //
-    //  POST   /api/game/{gameId}/move
-    //    Request:  { index: 0-8 }   (cell index, row-major: 0=top-left, 8=bot-right)
-    //    Response: GameState
-    //
-    //  POST   /api/game/{gameId}/reset
-    //    Request:  {}
-    //    Response: GameState
-    //
-    //  GET    /api/game/{gameId}
-    //    Response: GameState
-    //
-    //  ── GameState shape ─────────────────────────────────────
-    //  {
-    //    gameId:        string,
-    //    board:         string[9],   // each: "X" | "O" | ""
-    //    currentPlayer: "X" | "O",
-    //    status:        "ONGOING" | "X_WINS" | "O_WINS" | "DRAW",
-    //    winner:        "X" | "O" | null,
-    //    winCombo:      number[3] | null,  // e.g. [0,1,2] or null
-    //    playerXName:   string,
-    //    playerOName:   string,
-    //    playerXType:   "HUMAN" | "CPU",
-    //    playerOType:   "HUMAN" | "CPU",
-    //    scores:        { X: number, O: number, D: number }
-    //  }
-    // ═══════════════════════════════════════════════════════════
+    // If your backend is same-origin (Spring Boot serving static), keep "".
+    // If backend is elsewhere, set e.g. "http://localhost:8080"
+    const API_BASE = "";
 
-    document.getElementById('api-base-display').textContent =
-      API_BASE.replace('http://', '').replace('https://', '');
+    const MODE_META = {
+      HH: { badge: "H vs H",  hasX: true,  hasO: true  },
+      HC: { badge: "H vs CPU",hasX: true,  hasO: false },
+      CC: { badge: "CPU vs CPU",hasX: false, hasO: false },
+    };
 
-    // ── App State ──────────────────────────────────────────────
-    let gameId      = null;
-    let gameOver    = false;
+    // State
+    let pendingMode = null;
     let currentMode = null;
-    let isBoardLocked = false;
+    let sessionId = null;
+    let boardLocked = false;
+    let names = { X: "Player X", O: "Player O" };
+    let scores = { X: 0, O: 0, D: 0 };
 
-    // ── Screen Navigation ──────────────────────────────────────
-    function showScreen(id) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
+    // DOM
+    const serverDot = document.getElementById("serverDot");
+    const serverText = document.getElementById("serverText");
+    const modeBadge = document.getElementById("modeBadge");
+    const nameFields = document.getElementById("nameFields");
+    const p1NameEl = document.getElementById("p1Name");
+    const p2NameEl = document.getElementById("p2Name");
+    const startBtn = document.getElementById("startBtn");
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const boardEl = document.getElementById("board");
+    const turnPill = document.getElementById("turnPill");
+    const turnText = document.getElementById("turnText");
+    const nameX = document.getElementById("nameX");
+    const nameO = document.getElementById("nameO");
+    const scoreX = document.getElementById("scoreX");
+    const scoreO = document.getElementById("scoreO");
+    const scoreD = document.getElementById("scoreD");
+    const sessionIdText = document.getElementById("sessionIdText");
+    const statusText = document.getElementById("statusText");
+
+    const overlay = document.getElementById("overlay");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultMsg = document.getElementById("resultMsg");
+    const resultMark = document.getElementById("resultMark");
+    const closeOverlayBtn = document.getElementById("closeOverlayBtn");
+    const overlayPlayAgainBtn = document.getElementById("overlayPlayAgainBtn");
+
+    // Build board cells once
+    const cells = [];
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 3; c++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.dataset.row = String(r);
+        cell.dataset.col = String(c);
+        cell.addEventListener("click", () => onCellClick(r, c));
+        boardEl.appendChild(cell);
+        cells.push(cell);
+      }
     }
 
-    function goToMenu() {
-      gameId   = null;
-      gameOver = false;
-      showScreen('screen-menu');
-    }
+    // Mode selection
+    document.querySelectorAll(".modeBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".modeBtn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        pendingMode = btn.dataset.mode;
+        const meta = MODE_META[pendingMode];
+        modeBadge.textContent = `${meta.badge} (${pendingMode})`;
 
-    // ── Setup Screen ───────────────────────────────────────────
-    function startSetup(mode) {
-      currentMode = mode;
-      const form = document.getElementById('setup-form');
-      form.innerHTML = '';
+        // Enable/disable inputs based on mode
+        const showX = meta.hasX;
+        const showO = meta.hasO;
 
-      const configs = {
-        HVH: [
-          { label: 'Player X Name', id: 'p1', placeholder: 'Enter name...' },
-          { label: 'Player O Name', id: 'p2', placeholder: 'Enter name...' }
-        ],
-        HVC: [
-          { label: 'Your Name (plays as X)', id: 'p1', placeholder: 'Enter your name...' }
-        ],
-        CVC: []
-      };
+        p1NameEl.disabled = !showX;
+        p2NameEl.disabled = !showO;
 
-      configs[mode].forEach(f => {
-        form.innerHTML += `
-          <div class="form-group">
-            <label class="form-label">${f.label}</label>
-            <input class="form-input" id="${f.id}" placeholder="${f.placeholder}" maxlength="12"/>
-          </div>`;
+        if (!showX) p1NameEl.value = "CPU X";
+        if (!showO) p2NameEl.value = "CPU O";
+
+        if (showX && !p1NameEl.value.trim()) p1NameEl.value = "Player 1";
+        if (showO && !p2NameEl.value.trim()) p2NameEl.value = "Player 2";
+
+        startBtn.disabled = false;
       });
-
-      form.innerHTML += `<button class="form-btn" onclick="launchGame()">Start Game</button>`;
-      showScreen('screen-setup');
-      setTimeout(() => { const el = form.querySelector('input'); if (el) el.focus(); }, 100);
-    }
-
-    // ── Launch Game → POST /api/game/start ─────────────────────
-    async function launchGame() {
-      const getVal = (id, fallback) => {
-        const el = document.getElementById(id);
-        return el && el.value.trim() ? el.value.trim() : fallback;
-      };
-
-      const playerXName = getVal('p1', currentMode === 'CVC' ? 'CPU-α' : 'Player X');
-      const playerOName = getVal('p2', currentMode === 'HVC' ? 'CPU'   :
-                                       currentMode === 'CVC' ? 'CPU-β' : 'Player O');
-
-      buildBoard();
-      showScreen('screen-game');
-      setStatus('Connecting...', '');
-      lockBoard(true);
-
-      try {
-        const state = await apiPost('/game/start', {
-          mode: currentMode,
-          playerXName,
-          playerOName
-        });
-        applyState(state);
-      } catch (e) {
-        setStatus('API Error — check console', 'error');
-        console.error('[TicTacToe] /game/start failed:', e);
-      }
-    }
-
-    // ── Cell Click → POST /api/game/{id}/move ──────────────────
-    async function onCellClick(index) {
-      if (gameOver || isBoardLocked || !gameId) return;
-
-      const cell = document.querySelectorAll('.cell')[index];
-      if (cell.classList.contains('taken')) return;
-
-      lockBoard(true);
-
-      try {
-        const state = await apiPost(`/game/${gameId}/move`, { index });
-        applyState(state);
-      } catch (e) {
-        setStatus('Move failed — try again', 'error');
-        console.error('[TicTacToe] /move failed:', e);
-        lockBoard(false);
-      }
-    }
-
-    // ── Reset Game → POST /api/game/{id}/reset ─────────────────
-    async function resetGame() {
-      if (!gameId) return;
-
-      lockBoard(true);
-      setStatus('Loading...', '');
-
-      try {
-        const state = await apiPost(`/game/${gameId}/reset`, {});
-        renderBoard([]);          // clear visuals first
-        applyState(state);
-      } catch (e) {
-        setStatus('Reset failed — try again', 'error');
-        console.error('[TicTacToe] /reset failed:', e);
-        lockBoard(false);
-      }
-    }
-
-    // ── Apply API State to UI ───────────────────────────────────
-    function applyState(state) {
-      if (!state) return;
-
-      gameId   = state.gameId;
-      gameOver = state.status !== 'ONGOING';
-
-      // Player info
-      document.getElementById('name-x').textContent = state.playerXName || 'Player X';
-      document.getElementById('name-o').textContent = state.playerOName || 'Player O';
-      document.getElementById('type-x').textContent = (state.playerXType || 'HUMAN').toUpperCase();
-      document.getElementById('type-o').textContent = (state.playerOType || 'HUMAN').toUpperCase();
-
-      // Scores
-      if (state.scores) {
-        document.getElementById('score-x').textContent = state.scores.X ?? 0;
-        document.getElementById('score-o').textContent = state.scores.O ?? 0;
-        document.getElementById('score-d').textContent = state.scores.D ?? 0;
-      }
-
-      // Board cells
-      renderBoard(state.board || []);
-
-      // Win highlight
-      if (state.winCombo && state.winner) {
-        highlightWinCells(state.winCombo, state.winner);
-      }
-
-      // Status & card highlight
-      switch (state.status) {
-        case 'X_WINS':
-          setStatus(`${state.playerXName} wins!`, 'win-x');
-          highlightActiveCard(null);
-          lockBoard(true);
-          break;
-        case 'O_WINS':
-          setStatus(`${state.playerOName} wins!`, 'win-o');
-          highlightActiveCard(null);
-          lockBoard(true);
-          break;
-        case 'DRAW':
-          setStatus("It's a draw!", 'draw');
-          highlightActiveCard(null);
-          lockBoard(true);
-          break;
-        case 'ONGOING':
-        default: {
-          const cur = state.currentPlayer || 'X';
-          const curName = cur === 'X' ? state.playerXName : state.playerOName;
-          const curType = cur === 'X'
-            ? (state.playerXType || 'HUMAN')
-            : (state.playerOType || 'HUMAN');
-
-          highlightActiveCard(cur);
-
-          if (curType.toUpperCase() === 'CPU') {
-            // CPU is moving on the server — show thinking overlay & poll
-            setStatus('CPU is thinking...', '');
-            showThinking(true);
-            lockBoard(true);
-            pollForCpuMove();
-          } else {
-            setStatus(`${curName}'s turn [${cur}]`, '');
-            showThinking(false);
-            lockBoard(false);
-          }
-          break;
-        }
-      }
-    }
-
-    // ── Poll for CPU Move → GET /api/game/{id} ─────────────────
-    //    Called when currentPlayerType === CPU and game is ONGOING.
-    //    Polls every 600ms until the state changes from CPU's turn.
-    async function pollForCpuMove() {
-      if (!gameId) return;
-      const pollInterval = setInterval(async () => {
-        try {
-          const state = await apiFetch(`/game/${gameId}`);
-          const curType = state.currentPlayer === 'X'
-            ? state.playerXType
-            : state.playerOType;
-
-          const cpuStillThinking =
-            state.status === 'ONGOING' && curType.toUpperCase() === 'CPU';
-
-          if (!cpuStillThinking) {
-            clearInterval(pollInterval);
-            showThinking(false);
-            applyState(state);
-          }
-        } catch (e) {
-          clearInterval(pollInterval);
-          showThinking(false);
-          setStatus('Polling error — check console', 'error');
-          console.error('[TicTacToe] poll /game failed:', e);
-        }
-      }, 600);
-    }
-
-    // ── Board Rendering ────────────────────────────────────────
-    function buildBoard() {
-      const board = document.getElementById('board');
-      board.innerHTML = '';
-      for (let i = 0; i < 9; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.index = i;
-        cell.addEventListener('click', () => onCellClick(i));
-        board.appendChild(cell);
-      }
-    }
-
-    // board = string[9], each "X" | "O" | ""
-    function renderBoard(board) {
-      document.querySelectorAll('.cell').forEach((cell, i) => {
-        const val = board[i] || '';
-        cell.className = 'cell';
-        cell.textContent = '';
-        if (val === 'X') {
-          cell.textContent = 'X';
-          cell.classList.add('x-cell', 'taken');
-        } else if (val === 'O') {
-          cell.textContent = 'O';
-          cell.classList.add('o-cell', 'taken');
-        }
-      });
-    }
-
-    function highlightWinCells(combo, mark) {
-      if (!combo) return;
-      const cells = document.querySelectorAll('.cell');
-      combo.forEach(i => {
-        cells[i].classList.add('win-cell', mark === 'X' ? 'win-x' : 'win-o');
-      });
-    }
-
-    function lockBoard(locked) {
-      isBoardLocked = locked;
-      document.querySelectorAll('.cell').forEach(c => {
-        if (locked) c.classList.add('locked');
-        else if (!c.classList.contains('taken')) c.classList.remove('locked');
-      });
-      document.getElementById('btn-new-game').disabled = locked && !gameOver;
-    }
-
-    // ── UI Helpers ─────────────────────────────────────────────
-    function setStatus(text, cls = '') {
-      const el = document.getElementById('status');
-      el.className = 'status-bar ' + cls;
-      el.textContent = text;
-    }
-
-    function highlightActiveCard(mark) {
-      document.getElementById('card-x').className =
-        'player-card x-card' + (mark === 'X' ? ' active-x' : '');
-      document.getElementById('card-o').className =
-        'player-card o-card' + (mark === 'O' ? ' active-o' : '');
-    }
-
-    function showThinking(visible) {
-      document.getElementById('thinking').classList.toggle('visible', visible);
-    }
-
-    // ── API Helpers ────────────────────────────────────────────
-    async function apiPost(endpoint, body) {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body:    JSON.stringify(body)
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text}`);
-      }
-      return res.json();
-    }
-
-    async function apiFetch(endpoint) {
-      const res = await fetch(`${API_BASE}${endpoint}`, {
-        headers: { 'Accept': 'application/json' }
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`HTTP ${res.status}: ${text}`);
-      }
-      return res.json();
-    }
-
-    // ── Keyboard shortcut ──────────────────────────────────────
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' &&
-          document.getElementById('screen-setup').classList.contains('active')) {
-        launchGame();
-      }
     });
+
+    closeOverlayBtn.addEventListener("click", () => hideOverlay());
+    overlayPlayAgainBtn.addEventListener("click", async () => {
+      hideOverlay();
+      await playAgain();
+    });
+
+    startBtn.addEventListener("click", async () => {
+      if (!pendingMode) return;
+
+      const meta = MODE_META[pendingMode];
+      const p1 = meta.hasX ? (p1NameEl.value.trim() || "Player 1") : "CPU X";
+      const p2 = meta.hasO ? (p2NameEl.value.trim() || "Player 2") : "CPU O";
+
+      names = {
+        X: meta.hasX ? p1 : "CPU",
+        O: meta.hasO ? p2 : "CPU",
+      };
+
+      currentMode = pendingMode;
+      await startGame(currentMode, p1, p2);
+    });
+
+    playAgainBtn.addEventListener("click", playAgain);
+
+    resetBtn.addEventListener("click", async () => {
+      if (!sessionId) return;
+      await apiPost("/api/game/reset", { sessionId }).catch(() => {});
+      sessionId = null;
+      sessionIdText.textContent = "—";
+      statusText.textContent = "—";
+      lockBoard(true);
+      renderBoard(Array(9).fill(""));
+      setTurnUI(null);
+      playAgainBtn.disabled = true;
+      resetBtn.disabled = true;
+      turnText.textContent = "Session reset. Start a new game.";
+    });
+
+    async function checkServer() {
+      serverText.textContent = "Checking server…";
+      serverDot.className = "dot";
+      try {
+        const data = await apiGet("/api/game/health");
+        serverText.textContent = data.status || "✅ Server online";
+        serverDot.className = "dot ok";
+      } catch {
+        serverText.textContent = "❌ Server offline (start Spring Boot)";
+        serverDot.className = "dot bad";
+      }
+    }
+
+    async function startGame(mode, p1Name, p2Name) {
+      hideOverlay();
+      resetVisualBoard();
+      lockBoard(false);
+
+      // update score labels
+      nameX.textContent = names.X;
+      nameO.textContent = names.O;
+
+      // call backend
+      const data = await apiPost("/api/game/start", { mode, p1Name, p2Name });
+      if (data.error) {
+        showOverlay("Error", data.error, "!");
+        return;
+      }
+
+      sessionId = data.sessionId;
+      sessionIdText.textContent = sessionId;
+      playAgainBtn.disabled = false;
+      resetBtn.disabled = false;
+
+      applyServerState(data);
+
+      // CC loop
+      if (mode === "CC") {
+        await runCpuVsCpuLoop();
+      }
+    }
+
+    async function playAgain() {
+      if (!currentMode) return;
+
+      // keep same mode + names
+      const meta = MODE_META[currentMode];
+      const p1 = meta.hasX ? (p1NameEl.value.trim() || "Player 1") : "CPU X";
+      const p2 = meta.hasO ? (p2NameEl.value.trim() || "Player 2") : "CPU O";
+
+      await startGame(currentMode, p1, p2);
+    }
+
+    function resetVisualBoard() {
+      cells.forEach(c => {
+        c.className = "cell";
+        c.textContent = "";
+      });
+      statusText.textContent = "—";
+    }
+
+    function lockBoard(lock) {
+      boardLocked = lock;
+    }
+
+    async function onCellClick(row, col) {
+      if (boardLocked) return;
+      if (!sessionId) return;
+
+      // CC has no human clicks
+      if (currentMode === "CC") return;
+
+      const idx = row * 3 + col;
+      if (cells[idx].classList.contains("taken")) return;
+
+      lockBoard(true);
+
+      const data = await apiPost("/api/game/move", { sessionId, row, col });
+      if (data.error) {
+        // e.g. not human turn, invalid move
+        lockBoard(false);
+        return;
+      }
+
+      applyServerState(data);
+
+      if (data.status !== "ongoing") {
+        lockBoard(true);
+        handleGameOver(data);
+        return;
+      }
+
+      // HC: backend auto-played CPU if needed. No extra frontend work.
+      lockBoard(false);
+    }
+
+    async function runCpuVsCpuLoop() {
+      lockBoard(true);
+
+      while (true) {
+        await sleep(450);
+
+        const data = await apiPost("/api/game/cpuStep", { sessionId });
+        if (data.error) {
+          lockBoard(false);
+          return;
+        }
+
+        applyServerState(data);
+
+        if (data.status !== "ongoing") {
+          lockBoard(true);
+          handleGameOver(data);
+          return;
+        }
+      }
+    }
+
+    function applyServerState(state) {
+      renderBoard(state.board);
+      setTurnUI(state.currentPlayer);
+      statusText.textContent = state.status || "—";
+
+      // Backend returns names too; use them if present
+      if (state.p1Name) names.X = state.p1Name;
+      if (state.p2Name) names.O = state.p2Name;
+      nameX.textContent = names.X;
+      nameO.textContent = names.O;
+    }
+
+    function renderBoard(board) {
+      const flat = Array.isArray(board) ? board : [];
+      for (let i = 0; i < 9; i++) {
+        const v = (flat[i] || "").toString().trim().toUpperCase();
+        const cell = cells[i];
+        cell.className = "cell";
+        cell.textContent = "";
+
+        if (!v) continue;
+
+        cell.textContent = v;
+        cell.classList.add("taken");
+        if (v === "X") cell.classList.add("x");
+        if (v === "O") cell.classList.add("o");
+      }
+    }
+
+    function setTurnUI(mark) {
+      const m = (mark || "").toString().trim().toUpperCase();
+      if (m !== "X" && m !== "O") {
+        turnPill.textContent = "—";
+        turnPill.className = "pill";
+        turnText.textContent = "Start a game to play";
+        return;
+      }
+
+      turnPill.textContent = m;
+      turnPill.className = "pill " + (m === "X" ? "x" : "o");
+      const who = (m === "X") ? names.X : names.O;
+      turnText.textContent = `${who}'s turn`;
+    }
+
+    function handleGameOver(state) {
+      const status = (state.status || "").toLowerCase();
+      const winner = state.winner || null;
+
+      if (status === "draw" || !winner) {
+        scores.D++;
+        scoreD.textContent = String(scores.D);
+        showOverlay("Draw", "No winner this round.", "—", "d");
+        return;
+      }
+
+      // winner is a NAME (per backend patch)
+      const xWin = (winner === names.X);
+      if (xWin) {
+        scores.X++;
+        scoreX.textContent = String(scores.X);
+        showOverlay("Game over", `${winner} wins.`, "X", "x");
+      } else {
+        scores.O++;
+        scoreO.textContent = String(scores.O);
+        showOverlay("Game over", `${winner} wins.`, "O", "o");
+      }
+    }
+
+    function showOverlay(title, msg, mark, kind) {
+      resultTitle.textContent = title;
+      resultMsg.textContent = msg;
+
+      resultMark.textContent = mark;
+      resultMark.className = "bigMark " + (kind || "d");
+
+      overlay.classList.add("show");
+    }
+
+    function hideOverlay() {
+      overlay.classList.remove("show");
+    }
+
+    function sleep(ms) {
+      return new Promise(r => setTimeout(r, ms));
+    }
+
+    async function apiGet(path) {
+      const res = await fetch(API_BASE + path);
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    }
+
+    async function apiPost(path, body) {
+      const res = await fetch(API_BASE + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return { error: data.error || `Request failed (${res.status})` };
+      return data;
+    }
+
+    // init
+    checkServer();
 </script>
 </body>
 </html>

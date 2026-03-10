@@ -1,64 +1,93 @@
 package org.example;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/game")
+@CrossOrigin(origins = "*")
 public class GameController {
-    private Map<String, Game> games = new HashMap<>();
+
+    @Autowired
+    private GameSessionManager sessionManager;
+
+    // ---- DTOs (typed API) ----
+    public record StartRequest(String mode, String p1Name, String p2Name) {}
+    public record MoveRequest(String sessionId, int row, int col) {}
+    public record SessionRequest(String sessionId) {}
+
+    public record GameStateResponse(
+            String sessionId,
+            String[] board,
+            String currentPlayer,
+            String p1Name,
+            String p2Name,
+            String status,
+            String winner
+    ) {}
+
+    public record ErrorResponse(String error) {}
+
+    // ---- helpers ----
+    private GameStateResponse buildState(String sessionId, Game game) {
+        String winner = game.getWinnerName();
+        return new GameStateResponse(
+                sessionId,
+                game.getBoardState(),
+                game.getCurrentPlayer().toString(),
+                game.getPlayerOne().getNamePlayer(),
+                game.getPlayerTwo().getNamePlayer(),
+                game.getGameStatus(),
+                winner
+        );
+    }
+
+    // ---- endpoints ----
 
     @PostMapping("/start")
-    public Game startGame(@RequestBody PlayerNames playerNames) {
-        Player playerOne;
-        playerOne = new Player("", Mark.X) {
-            @Override
-            public void doMove(Mark[][] field) {
-
-            }
-        };
-        Player playerTwo;
-        playerTwo = new Player("", Mark.O) {
-            @Override
-            public void doMove(Mark[][] field) {
-
-            }
-        };
-        Game game = new Game(playerOne, playerTwo);
-        games.put(game.getGameId(), game);
-        return game;
+    public ResponseEntity<?> start(@RequestBody StartRequest req) {
+        String sessionId = sessionManager.createGame(req.p1Name(), req.p2Name(), req.mode());
+        Game game = sessionManager.getGame(sessionId);
+        return ResponseEntity.ok(buildState(sessionId, game));
     }
 
-    @PostMapping("/{gameId}/move")
-    public Game makeMove(@PathVariable String gameId, @RequestBody MoveRequest moveRequest) {
-        Game game = games.get(gameId);
-        if (game != null) {
-            boolean validMove = game.applyMove(moveRequest.getIndex());
-            // Optionally check if the game is over after the move
-            if (!validMove) {
-                throw new IllegalArgumentException("Invalid move. Please try again.");
-            }
-        } else {
-            throw new IllegalArgumentException("Game not found.");
+    @PostMapping("/move")
+    public ResponseEntity<?> move(@RequestBody MoveRequest req) {
+        Game game = sessionManager.getGame(req.sessionId());
+
+        boolean ok = game.applyHumanMove(req.row(), req.col());
+        if (!ok) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("Invalid move (or not human turn / game over)"));
         }
-        return game;
+
+        return ResponseEntity.ok(buildState(req.sessionId(), game));
     }
 
-    @GetMapping("/{gameId}")
-    public Game getGameState(@PathVariable String gameId) {
-        Game game = games.get(gameId);
-        if (game == null) {
-            throw new IllegalArgumentException("Game not found.");
+    /**
+     * For CC mode animation (CPU vs CPU):
+     * Call this repeatedly until status != "ongoing".
+     */
+    @PostMapping("/cpuStep")
+    public ResponseEntity<?> cpuStep(@RequestBody SessionRequest req) {
+        Game game = sessionManager.getGame(req.sessionId());
+
+        boolean ok = game.cpuStep();
+        if (!ok) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("Cannot CPU-step (not CPU turn / game over)"));
         }
-        return game;
+
+        return ResponseEntity.ok(buildState(req.sessionId(), game));
     }
 
-    @PostMapping("/{gameId}/reset")
-    public Game resetGame(@PathVariable String gameId) {
-        Game game = new Game(games.get(gameId).getPlayerOne(), games.get(gameId).getPlayerTwo());
-        games.put(gameId, game);
-        return game;
+    @PostMapping("/reset")
+    public ResponseEntity<?> reset(@RequestBody SessionRequest req) {
+        sessionManager.removeGame(req.sessionId());
+        return ResponseEntity.ok().body(java.util.Map.of("message", "Game reset successfully"));
+    }
+
+    @GetMapping("/health")
+    public ResponseEntity<?> health() {
+        return ResponseEntity.ok(java.util.Map.of("status", "✅ Tic-Tac-Toe server is running"));
     }
 }

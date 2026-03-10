@@ -2,104 +2,75 @@ package org.example;
 
 public class Board {
 
-	Mark[][] field = new Mark[3][3];
+    private final Mark[][] field = new Mark[3][3];
 
-	private Mark winner = null;
+    public Board() {
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                field[r][c] = Mark.EMPTY;
+            }
+        }
+    }
 
-	private boolean returnResult = false;
+    public Mark[][] getField() {
+        return field;
+    }
 
-	public Board() {
-		for (int i = 0; i < 3; i++) {
-			for (int j = 0; j < 3; j++) {
-				field[i][j] = Mark.EMPTY;
-			}
-		}
-	}
+    /**
+     * @return Mark.X or Mark.O if there is a winner; null if no winner.
+     */
+    public Mark getWinner() {
+        // rows
+        for (int r = 0; r < 3; r++) {
+            if (field[r][0] != Mark.EMPTY && field[r][0] == field[r][1] && field[r][1] == field[r][2]) {
+                return field[r][0];
+            }
+        }
+        // cols
+        for (int c = 0; c < 3; c++) {
+            if (field[0][c] != Mark.EMPTY && field[0][c] == field[1][c] && field[1][c] == field[2][c]) {
+                return field[0][c];
+            }
+        }
+        // diagonals
+        if (field[0][0] != Mark.EMPTY && field[0][0] == field[1][1] && field[1][1] == field[2][2]) {
+            return field[0][0];
+        }
+        if (field[0][2] != Mark.EMPTY && field[0][2] == field[1][1] && field[1][1] == field[2][0]) {
+            return field[0][2];
+        }
 
-	public Mark getWinner() {
-		for (int r = 0; r < 3; r++) {
-			if (field[r][0] != Mark.EMPTY &&
-					field[r][0] == field[r][1] &&
-					field[r][1] == field[r][2]) {
-				return field[r][0];
-			}
-		}
-		return Mark.EMPTY;
-	}
+        return null;
+    }
 
-	public Mark[][] getField() {
-		return field;
-	}
+    public boolean isDraw() {
+        if (getWinner() != null) return false;
 
-	public boolean checkForWinAndDrow() {
-		if (checkForWinHorizontally() || checkForWinUpright()
-				|| checkForWinDiagonallyLeft() || checkForWinDiagonallyRight()) {
-			System.out.println(winner + " Winner!!!");
-			return true;
-		} else {
-			if (checkForDrow()) {
-				System.out.println("Drow !!!");
-				return true;
-			} else {
-				return false;
-			}
-		}
-	}
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                if (field[r][c] == Mark.EMPTY) return false;
+            }
+        }
+        return true;
+    }
 
-	private boolean checkForWinHorizontally() {
-		for (int i = 0; i < 3; i++) {
-			if (field[i][0] == field[i][1] && field[i][1] == field[i][2]
-					&& field[i][2] != Mark.EMPTY) {
-				winner = field[i][0];
-				returnResult = true;
-			}
-		}
-		return returnResult;
-	}
+    public boolean isGameOver() {
+        return getWinner() != null || isDraw();
+    }
 
-	private boolean checkForDrow() {
-		int count = 0;
-		for (int row = 0; row < 3; row++) {
-			for (int column = 0; column < 3; column++) {
-				if (field[row][column] == Mark.EMPTY) {
-					count++;
-				}
-			}
-		}
-		if (count == 0) {
-			returnResult = true;
-		}
-		return returnResult;
-	}
+    public static boolean isWinningState(Mark[][] f, Mark m) {
+        // rows
+        for (int r = 0; r < 3; r++) {
+            if (f[r][0] == m && f[r][1] == m && f[r][2] == m) return true;
+        }
+        // cols
+        for (int c = 0; c < 3; c++) {
+            if (f[0][c] == m && f[1][c] == m && f[2][c] == m) return true;
+        }
+        // diagonals
+        if (f[0][0] == m && f[1][1] == m && f[2][2] == m) return true;
+        if (f[0][2] == m && f[1][1] == m && f[2][0] == m) return true;
 
-	private boolean checkForWinUpright() {
-		for (int i = 0; i < 3; i++) {
-			if (field[0][i] == field[1][i] && field[1][i] == field[2][i]
-					&& field[2][i] != Mark.EMPTY) {
-				winner = field[0][i];
-				returnResult = true;
-			}
-		}
-		return returnResult;
-	}
-
-	private boolean checkForWinDiagonallyLeft() {
-		if (field[0][0] == field[1][1] && field[1][1] == field[2][2]
-				&& field[2][2] != Mark.EMPTY) {
-			winner = field[0][0];
-			return true;
-		} else {
-			return false;
-		}
-	}
-
-	private boolean checkForWinDiagonallyRight() {
-		if (field[0][2] == field[1][1] && field[1][1] == field[2][0]
-				&& field[2][0] != Mark.EMPTY) {
-			winner = field[1][1];
-			return true;
-		} else {
-			return false;
-		}
-	}
+        return false;
+    }
 }

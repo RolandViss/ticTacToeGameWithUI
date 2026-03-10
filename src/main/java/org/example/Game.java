@@ -1,93 +1,120 @@
 package org.example;
 
-import java.util.UUID;
-
 public class Game {
-	private String gameId;
-	private Player playerOne;
-	private Player playerTwo;
-	private Mark currentPlayer;
-	private Board board;
-	private String status;
-	private String winner;
 
-	public Game(Player playerOne, Player playerTwo) {
-		this.gameId = UUID.randomUUID().toString(); // Generate unique game ID
-		this.playerOne = playerOne;
-		this.playerTwo = playerTwo;
-		this.currentPlayer = Mark.X;
-		this.board = new Board();
-		this.status = "ongoing"; // Initial game status
-		this.winner = null; // No winner at the start
-	}
+    private final Player playerOne; // X
+    private final Player playerTwo; // O
+    private Mark currentPlayer;     // X or O
+    private final Board board = new Board();
 
-	// Get board state as flat String array for JSON response
-	public String[] getBoardState() {
-		Mark[][] field = board.getField();
-		String[] flat = new String[9];
-		for (int r = 0; r < 3; r++) {
-			for (int c = 0; c < 3; c++) {
-				Mark m = field[r][c];
-				flat[r * 3 + c] = m == Mark.EMPTY ? "" : m.toString();
-			}
-		}
-		return flat;
-	}
+    public Game(Player playerOne, Player playerTwo) {
+        this.playerOne = playerOne;
+        this.playerTwo = playerTwo;
+        this.currentPlayer = Mark.X;
+    }
 
-	// Apply move from UI (REST API)
-	public boolean applyMove(int index) {
-		int row = index / 3; // Calculate row based on index
-		int col = index % 3; // Calculate column based on index
+    public String[] getBoardState() {
+        Mark[][] f = board.getField();
+        String[] flat = new String[9];
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                Mark m = f[r][c];
+                flat[r * 3 + c] = (m == Mark.EMPTY) ? "" : m.toString();
+            }
+        }
+        return flat;
+    }
 
-		Mark[][] field = board.getField();
+    public Player getPlayerOne() {
+        return playerOne;
+    }
 
-		// Validate move
-		if (row < 0 || row > 2 || col < 0 || col > 2 || field[row][col] != Mark.EMPTY) {
-			return false; // Invalid move
-		}
+    public Player getPlayerTwo() {
+        return playerTwo;
+    }
 
-		// Apply human move
-		field[row][col] = currentPlayer;
+    public Mark getCurrentPlayer() {
+        return currentPlayer;
+    }
 
-		// Check for win or draw
-		if (board.checkForWinAndDrow()) {
-			if (board.getWinner() != null) {
-				winner = currentPlayer.toString();
-				status = "win"; // Update status to win
-			} else {
-				status = "draw"; // Update status to draw
-			}
-		} else {
-			switchTurn(); // Switch to the next player
-		}
+    public Player getCurrentPlayerObj() {
+        return (currentPlayer == Mark.X) ? playerOne : playerTwo;
+    }
 
-		return true; // Move applied successfully
-	}
+    public String getGameStatus() {
+        if (board.getWinner() != null) return "win";
+        if (board.isDraw()) return "draw";
+        return "ongoing";
+    }
 
-	// Switch turn
-	private void switchTurn() {
-		currentPlayer = (currentPlayer == Mark.X) ? Mark.O : Mark.X;
-	}
+    public String getWinnerName() {
+        Mark w = board.getWinner();
+        if (w == null) return null;
+        return (w == Mark.X) ? playerOne.getNamePlayer() : playerTwo.getNamePlayer();
+    }
 
-	// Get current player info
-	public Player getCurrentPlayerObj() {
-		return (currentPlayer == Mark.X) ? playerOne : playerTwo;
-	}
+    /**
+     * Human move endpoint.
+     * - Only valid if it's currently a HumanPlayer turn.
+     * - After a human move, if next is CPU and game is still ongoing, CPU auto-plays exactly ONE move.
+     */
+    public boolean applyHumanMove(int row, int col) {
+        if (board.isGameOver()) return false;
 
-	// Get game status
-	public String getGameStatus() {
-		return status; // Return current game status
-	}
+        Player current = getCurrentPlayerObj();
+        if (!(current instanceof HumanPlayer)) return false;
 
-	// Get winner name
-	public String getWinnerName() {
-		if (winner == null) return null;
-		return (winner.equals("X")) ? playerOne.getNamePlayer() : playerTwo.getNamePlayer();
-	}
+        if (!isValidCell(row, col)) return false;
 
-	// Getters for REST API
-	public String getGameId() { return gameId; }
-	public Mark getCurrentPlayer() { return currentPlayer; }
-	public Player getPlayerOne() { return playerOne; }
-	public Player getPlayerTwo() { return playerTwo; }
+        Mark[][] f = board.getField();
+        if (f[row][col] != Mark.EMPTY) return false;
+
+        // place
+        f[row][col] = currentPlayer;
+
+        // if game ends, stop
+        if (board.isGameOver()) return true;
+
+        // switch to next
+        switchTurn();
+
+        // auto CPU once (for HC)
+        Player next = getCurrentPlayerObj();
+        if (next instanceof ComputerPlayer && !board.isGameOver()) {
+            next.doMove(f);
+            if (!board.isGameOver()) {
+                switchTurn();
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * CPU step endpoint (for CC mode animation).
+     * - Only valid if it's currently a ComputerPlayer turn.
+     * - Plays exactly ONE computer move.
+     */
+    public boolean cpuStep() {
+        if (board.isGameOver()) return false;
+
+        Player current = getCurrentPlayerObj();
+        if (!(current instanceof ComputerPlayer)) return false;
+
+        Mark[][] f = board.getField();
+        current.doMove(f);
+
+        if (!board.isGameOver()) {
+            switchTurn();
+        }
+        return true;
+    }
+
+    private boolean isValidCell(int row, int col) {
+        return row >= 0 && row <= 2 && col >= 0 && col <= 2;
+    }
+
+    private void switchTurn() {
+        currentPlayer = (currentPlayer == Mark.X) ? Mark.O : Mark.X;
+    }
 }

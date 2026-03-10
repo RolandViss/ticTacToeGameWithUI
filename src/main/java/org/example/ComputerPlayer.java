@@ -2,75 +2,77 @@ package org.example;
 
 public class ComputerPlayer extends Player {
 
-	public ComputerPlayer(String namePlayer, Mark mark) {
-		super(namePlayer, mark);
-	}
+    public ComputerPlayer(String namePlayer, Mark mark) {
+        super(namePlayer, mark);
+    }
 
-	@Override
-	public void doMove(Mark[][] field) {
-		// AI logic: find best move
-		int[] bestMove = findBestMove(field);
-		if (bestMove != null) {
-			field[bestMove[0]][bestMove[1]] = getMark();
-		}
-	}
+    @Override
+    public void doMove(Mark[][] field) {
+        int[] bestMove = findBestMove(field);
+        if (bestMove != null) {
+            field[bestMove[0]][bestMove[1]] = getMark();
+        }
+    }
 
-	private int[] findBestMove(Mark[][] field) {
-		// Win if possible
-		for (int r = 0; r < 3; r++) {
-			for (int c = 0; c < 3; c++) {
-				if (field[r][c] == Mark.EMPTY) {
-					field[r][c] = getMark();
-					// Check if this move wins (you'll need a helper method in Board)
-					field[r][c] = Mark.EMPTY;
-					// If winning move found, return it
-				}
-			}
-		}
+    /**
+     * Very simple AI:
+     * 1) win if possible
+     * 2) block opponent win
+     * 3) take center
+     * 4) take a corner
+     * 5) take any empty
+     */
+    private int[] findBestMove(Mark[][] field) {
+        Mark me = getMark();
+        Mark opp = (me == Mark.X) ? Mark.O : Mark.X;
 
-		// Block opponent if possible
-		Mark opponent = getMark() == Mark.X ? Mark.O : Mark.X;
-		for (int r = 0; r < 3; r++) {
-			for (int c = 0; c < 3; c++) {
-				if (field[r][c] == Mark.EMPTY) {
-					field[r][c] = opponent;
-					// Check if opponent would win
-					field[r][c] = Mark.EMPTY;
-					// If blocking move needed, return it
-				}
-			}
-		}
+        // 1) win
+        int[] move = findMoveThatWins(field, me);
+        if (move != null) return move;
 
-		// Take center if available
-		if (field[1][1] == Mark.EMPTY) {
-			return new int[]{1, 1};
-		}
+        // 2) block
+        move = findMoveThatWins(field, opp);
+        if (move != null) return move;
 
-		// Take any corner
-		int[][] corners = {{0,0}, {0,2}, {2,0}, {2,2}};
-		for (int[] corner : corners) {
-			if (field[corner[0]][corner[1]] == Mark.EMPTY) {
-				return corner;
-			}
-		}
+        // 3) center
+        if (field[1][1] == Mark.EMPTY) return new int[]{1, 1};
 
-		// Take any remaining space
-		for (int r = 0; r < 3; r++) {
-			for (int c = 0; c < 3; c++) {
-				if (field[r][c] == Mark.EMPTY) {
-					return new int[]{r, c};
-				}
-			}
-		}
+        // 4) corners
+        int[][] corners = {{0,0}, {0,2}, {2,0}, {2,2}};
+        for (int[] c : corners) {
+            if (field[c[0]][c[1]] == Mark.EMPTY) return c;
+        }
 
-		return null; // No moves available
-	}
+        // 5) any empty
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                if (field[r][c] == Mark.EMPTY) return new int[]{r, c};
+            }
+        }
 
-	@Override
-	public String toString() {
-		return "ComputerPlayer{" +
-				"name='" + getNamePlayer() + '\'' +
-				", mark=" + getMark() +
-				'}';
-	}
+        return null;
+    }
+
+    private int[] findMoveThatWins(Mark[][] field, Mark markToTest) {
+        for (int r = 0; r < 3; r++) {
+            for (int c = 0; c < 3; c++) {
+                if (field[r][c] != Mark.EMPTY) continue;
+
+                field[r][c] = markToTest;
+                boolean wins = Board.isWinningState(field, markToTest);
+                field[r][c] = Mark.EMPTY;
+
+                if (wins) return new int[]{r, c};
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return "ComputerPlayer{" +
+                "name='" + getNamePlayer() + '\'' +
+                ", mark=" + getMark() +
+                '}';
+    }
 }
