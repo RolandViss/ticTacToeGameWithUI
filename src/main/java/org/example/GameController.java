@@ -83,11 +83,6 @@ public class GameController {
     }
 
     // ---- endpoints ----
-    @GetMapping("/health")
-    public ResponseEntity<?> health() {
-        return ResponseEntity.ok(Map.of("status", "✅ Tic-Tac-Toe server is running"));
-    }
-
     @PostMapping("/start")
     public ResponseEntity<?> start(@RequestBody StartRequest req) {
         try {
